@@ -1,0 +1,19 @@
+{
+  "bbox": [
+    {
+      "detectedBox": [
+        "0.026",
+        "0.328",
+        "0.215",
+        "0.538"
+      ],
+      "detectedClass": "hard-hat",
+      "detectedScore": "1.000"
+    }
+  ],
+  "elapsedTime": 229.2865110039711,
+  "version": {
+    "name": "Poor model",
+    "version": "1.0.0"
+  }
+}
