@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+  <meta charset="utf-8">
+  <title>TFJS IEAM Demo</title>
+  <style>
+    table {
+      border-collapse: collapse;
+      border-spacing: 0;
+      float: left;
+      max-width: 700px;
+      border: 1px solid #ddd;
+      margin-right: 20px;
+      margin-bottom: 20px;
+      table-layout: fixed;
+    }
+
+    th, td {
+        text-align: left;
+        padding: 8px;
+        width: 100%;
+    }
+
+    tr:nth-child(even){background-color: #f2f2f2}
+    tr th:nth-child(n+2){text-align: right}
+    tr td:nth-child(n+2){text-align: right}
+  </style>
+  <script type="text/javascript" src="/static/js/webcam.min.js"></script>
+  <!-- <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script> -->
+  <script src="/static/js/image.js"></script>
+  <body onload="ieam.loadJson('/static/js/image.json')">
+    <div>
+      <form ref='uploadForm' 
+        id='uploadForm' 
+        action='/upload'
+        method='post' 
+        encType="multipart/form-data">
+          <input type="file" name="imageFile" />
+          <input class="submit" type='submit' value='Upload!' />
+          <input class="camera" type='button' value='Camera Off' />
+      </form>
+      <video id="webcam" autoplay playsinline width="5" height="5"></video>
+      <audio id="snapSound" src="/static/js/audio_snap.wav" preload = "auto"></audio>
+     
+      <div id="time"></div>
+      <div class="version"></div>
+      <div class="output"></div>
+      <br />
+      <br />
+      <table id="table"></table>
+      <canvas id="canvas"></canvas>
+      <br />
+    </div>
+  
+  </body>
+  <script>
+    let camera = document.querySelector('.camera');
+    camera.addEventListener('click', (event) => {
+      console.log('click')
+      ieam.toggleCam(event);
+    })
+    document.addEventListener('DOMContentLoaded', (event) => {
+      ieam.onSubmit();
+      ieam.setInterval(5000);
+    })
+  </script>

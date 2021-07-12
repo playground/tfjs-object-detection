@@ -62,8 +62,9 @@ let ieam = {
       try {
         console.log(imageFile)
         const image = fs.readFileSync(imageFile);
-        const decodedImage = tfnode.node.decodeImage(new Uint8Array(image), 3);
-        const inputTensor = decodedImage.expandDims(0);
+        let decodedImage = tfnode.node.decodeImage(image);
+        let inputTensor = decodedImage.expandDims(0);
+        console.log('Image:', decodedImage.size, 'bytes with shape:', inputTensor.shape);
         await ieam.inference(inputTensor, imageFile);
         ieam.doCapture = true;
       } catch(e) {
