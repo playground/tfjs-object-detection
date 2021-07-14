@@ -63,9 +63,11 @@ let ieam = {
         console.log(imageFile)
         const image = fs.readFileSync(imageFile);
         let decodedImage = tfnode.node.decodeImage(image);
-        let inputTensor = decodedImage.expandDims(0);
+        let inputTensor = decodedImage.expandDims();
         console.log('Image:', decodedImage.size, 'bytes with shape:', inputTensor.shape);
-        await ieam.inference(inputTensor, imageFile);
+        const zeros = tfnode.zeros(inputTensor.shape);
+        console.log('Image:', decodedImage.size, 'bytes with shape:', zeros);
+        await ieam.inference(zeros, imageFile);
         ieam.doCapture = true;
       } catch(e) {
         console.log(e);
@@ -75,7 +77,7 @@ let ieam = {
   },  
   inference: async (inputTensor, imageFile) => {
     const startTime = tfnode.util.now();
-    let outputTensor = await model.predict({input_tensor: inputTensor});
+    let outputTensor = await model.predict(inputTensor);
     const scores = await outputTensor['detection_scores'].arraySync();
     const boxes = await outputTensor['detection_boxes'].arraySync();
     const classes = await outputTensor['detection_classes'].arraySync();

@@ -1,7 +1,7 @@
 let tfnode = require('@tensorflow/tfjs-node');
-const fs = require('fs');
+const {unlinkSync, stat, renameSync, readdir, readdirSync, existsSync, readFileSync} = require('fs');
 const jsonfile = require('jsonfile');
-const { Observable, forkJoin } = require('rxjs');
+const { Observable } = require('rxjs');
 const cp = require('child_process'),
 exec = cp.exec;
 
@@ -61,20 +61,20 @@ let ieam = {
       ieam.capture();
     }
     let imageFile = `${imagePath}/image.png`;
-    if(!fs.existsSync(imageFile)) {
+    if(!existsSync(imageFile)) {
       imageFile = `${imagePath}/image.jpg`;
     }
-    if(fs.existsSync(imageFile)) {
+    if(existsSync(imageFile)) {
       try {
         console.log(imageFile)
-        const image = fs.readFileSync(imageFile);
+        const image = readFileSync(imageFile);
         const decodedImage = tfnode.node.decodeImage(new Uint8Array(image), 3);
         const inputTensor = decodedImage.expandDims(0);
         await ieam.inference(inputTensor, imageFile);
         ieam.doCapture = true;
       } catch(e) {
         console.log(e);
-        fs.unlinkSync(imageFile);
+        unlinkSync(imageFile);
       }
     }  
   },  
@@ -94,7 +94,7 @@ let ieam = {
     let predictions = [];
     const elapsedTime = endTime - startTime;
     for (let i = 0; i < scores[0].length; i++) {
-      if (scores[0][i] > 0.5) {
+      if (scores[0][i] > 0.6) {
         predictions.push({
           detectedBox: boxes[0][i].map((el)=>el.toFixed(3)),
           detectedClass: labels[classes[0][i]],
@@ -110,14 +110,14 @@ let ieam = {
   },
   traverse: (dir, done) => {
     var results = [];
-    fs.readdir(dir, (err, list) => {
+    readdir(dir, (err, list) => {
       if (err) return done(err);
       var i = 0;
       (function next() {
         var file = list[i++];
         if (!file) return done(null, results);
         file = path.resolve(dir, file);
-        fs.stat(file, (err, stat) => {
+        stat(file, (err, stat) => {
           if (stat && stat.isDirectory()) {
             ieam.traverse(file, (err, res) => {
               results = results.concat(res);
@@ -133,12 +133,12 @@ let ieam = {
   },
   checkMMS: () => {
     let list;
-    if(fs.existsSync(mmsPath)) {
-      list = fs.readdirSync(mmsPath);
+    if(existsSync(mmsPath)) {
+      list = readdirSync(mmsPath);
       list = list.filter(item => /(\.zip)$/.test(item));
       sharedPath = mmsPath;  
     } else {
-      list = fs.readdirSync(localPath);
+      list = readdirSync(localPath);
       list = list.filter(item => /(\.zip)$/.test(item));
       sharedPath = localPath;
     }
@@ -158,7 +158,7 @@ let ieam = {
           observer.complete();
         }
         exec(arg, {maxBuffer: 1024 * 2000}, (err, stdout, stderr) => {
-          fs.unlinkSync(`${sharedPath}/${file}`);
+          unlinkSync(`${sharedPath}/${file}`);
           if(!err) {
             observer.next();
             observer.complete();
@@ -188,9 +188,23 @@ let ieam = {
       });
     });    
   },
+  removeFiles: (srcDir) => {
+    return new Observable((observer) => {
+      let arg = `rm -rf ${srcDir}/*`;
+      exec(arg, {maxBuffer: 1024 * 2000}, (err, stdout, stderr) => {
+        if(!err) {
+          observer.next();
+          observer.complete();
+        } else {
+          console.log(err);
+          observer.error(err);
+        }
+      });
+    });    
+  },
   renameFile: (from, to) => {
-    if(fs.existsSync(from)) {
-      fs.renameSync(from, to);
+    if(existsSync(from)) {
+      renameSync(from, to);
     }    
   },
   loadModel: async (modelPath) => {
@@ -238,7 +252,11 @@ let ieam = {
     } catch(e) {
       console.log(e);
       if(modelPath === newModelPath) {
-        ieam.loadModel(currentModelPath);
+        ieam.removeFiles(modelPath)
+        .subscribe(() => {
+          console.log('modelpath', modelPath)
+          ieam.loadModel(currentModelPath);
+        })
       } else if(modelPath === currentModelPath) {
         ieam.loadModel(oldModelPath);
       } else {
@@ -253,7 +271,7 @@ let ieam = {
     ieam.setInterval(intervalMS);  
   },
   checkNewModel: async () => {
-      let files = fs.readdirSync(newModelPath);
+      let files = readdirSync(newModelPath);
       list = files.filter(item => !(/(^|\/)\.[^\/\.]/g).test(item));
       // console.log(files, list)
       if(list.length > 0) {
