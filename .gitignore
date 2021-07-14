@@ -5,6 +5,7 @@
 /tmp
 /out-tsc
 data
+__MACOSX
 #/model*
 
 # dependencies
