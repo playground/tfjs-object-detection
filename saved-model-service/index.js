@@ -137,7 +137,7 @@ let ieam = {
       list = readdirSync(mmsPath);
       list = list.filter(item => /(\.zip)$/.test(item));
       sharedPath = mmsPath;  
-    } else {
+    } else if(existsSync(localPath)) {
       list = readdirSync(localPath);
       list = list.filter(item => /(\.zip)$/.test(item));
       sharedPath = localPath;
