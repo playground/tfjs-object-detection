@@ -158,7 +158,9 @@ let ieam = {
           observer.complete();
         }
         exec(arg, {maxBuffer: 1024 * 2000}, (err, stdout, stderr) => {
-          unlinkSync(`${sharedPath}/${file}`);
+          if(existsSync(`${sharedPath}/${file}`)) {
+            unlinkSync(`${sharedPath}/${file}`);
+          }
           if(!err) {
             observer.next();
             observer.complete();
@@ -183,7 +185,8 @@ let ieam = {
           observer.complete();
         } else {
           console.log(err);
-          observer.error(err);
+          observer.next();
+          observer.complete();
         }
       });
     });    
@@ -197,7 +200,8 @@ let ieam = {
           observer.complete();
         } else {
           console.log(err);
-          observer.error(err);
+          observer.next();
+          observer.complete();
         }
       });
     });    
@@ -209,34 +213,24 @@ let ieam = {
   },
   loadModel: async (modelPath) => {
     try {
-      delete(model);
-      delete(labels);
-      delete(version);
-      count++;
-      const startTime = tfnode.util.now();
-      model = await tfnode.node.loadSavedModel(modelPath);
-      const endTime = tfnode.util.now();
-
-      console.log(`loading time:  ${modelPath}, ${endTime-startTime}`);
-      labels = jsonfile.readFileSync(`${modelPath}/assets/labels.json`);
-      version = jsonfile.readFileSync(`${modelPath}/assets/version.json`);
-      console.log('version: ', version)
-      if(modelPath === newModelPath) {
+      let newVersion = jsonfile.readFileSync(`${modelPath}/assets/version.json`);
+      if(version && version.version === newVersion.version) {
+        ieam.removeFiles(modelPath)
+        .subscribe(() => {
+          ieam.resetTimer();
+        });
+      }
+      else if(modelPath === newModelPath) {
         console.log('iam new')
         ieam.moveFiles(currentModelPath, oldModelPath)
         .subscribe({
           next: (v) => ieam.moveFiles(newModelPath, currentModelPath)
             .subscribe({
               next: (v) => {
-                if(count > 2) {
-                  console.log('new model did not load, restarting server...');
-                  ieam.restart();
-                } else {
-                  console.log('reset timer');
-                  ieam.renameFile(`${imagePath}/image-old.png`, `${imagePath}/image.png`);  
-                  ieam.checkImage();
-                  ieam.resetTimer();  
-                }
+                
+                  console.log('new model is available, restarting server...');
+                  process.exit(0);
+                
               },   
               error: (e) => {
                 console.log('reset timer');
@@ -248,6 +242,16 @@ let ieam = {
             ieam.resetTimer(); 
           }
         })
+      } else if(modelPath !== newModelPath){
+        count++;
+        const startTime = tfnode.util.now();
+        model = await tfnode.node.loadSavedModel(modelPath);
+        const endTime = tfnode.util.now();
+
+        console.log(`loading time:  ${modelPath}, ${endTime-startTime}`);
+        labels = jsonfile.readFileSync(`${modelPath}/assets/labels.json`);
+        version = jsonfile.readFileSync(`${modelPath}/assets/version.json`);
+        console.log('version: ', version)
       }
     } catch(e) {
       console.log(e);
@@ -317,9 +321,6 @@ let ieam = {
         delete require.cache[id];
       }  
     });
-    tfnode = require('@tensorflow/tfjs-node');
-    ieam.loadModel(currentModelPath);
-    ieam.initialInference();  
 
     state.sockets.forEach((socket, index) => {
       // console.log('Destroying socket', index + 1);
@@ -334,6 +335,13 @@ let ieam = {
       console.log('Server is closed');
       console.log('\n----------------- restarting -------------');
       ieam.start();
+      tfnode = require('@tensorflow/tfjs-node');
+      delete(model);
+      delete(labels);
+      delete(version);
+      ieam.loadModel(currentModelPath)
+      ieam.initialInference();  
+      ieam.setInterval(intervalMS);
     });
   }      
 }

@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js",
+    "start": "node find-node.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "ljeff@us.ibm.com",
@@ -13,6 +13,7 @@
     "@tensorflow/tfjs-node": "^3.8.0",
     "express": "^4.17.1",
     "express-fileupload": "^1.2.1",
+    "find-process": "^1.4.4",
     "jsonfile": "^6.1.0",
     "multer": "^1.4.2",
     "rxjs": "^7.1.0",
