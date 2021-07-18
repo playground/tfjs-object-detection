@@ -1,5 +1,5 @@
 let tfnode = require('@tensorflow/tfjs-node');
-const {unlinkSync, stat, renameSync, readdir, readdirSync, existsSync, readFileSync} = require('fs');
+const {unlinkSync, stat, renameSync, readdir, readdirSync, existsSync, readFileSync, copyFileSync} = require('fs');
 const jsonfile = require('jsonfile');
 const { Observable } = require('rxjs');
 const cp = require('child_process'),
@@ -301,7 +301,11 @@ let ieam = {
     }, ms);
   },
   initialInference: () => {
-    ieam.renameFile(`${imagePath}/image-old.png`, `${imagePath}/image.png`);  
+    let oldImage = `${imagePath}/image-old.png`;
+    if(!existsSync(oldImage)) {
+      copyFileSync(`${imagePath}/backup.png`, oldImage)
+    }
+    ieam.renameFile(oldImage, `${imagePath}/image.png`);  
   },
   start: () => {
     count = 0;
