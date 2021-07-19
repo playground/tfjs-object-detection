@@ -34,7 +34,7 @@ module.exports = () => {
       } else {
         // The name of the input field (i.e. "sampleFile") is used to retrieve the uploaded file
         let imageFile = req.files.imageFile;
-        let uploadPath = __dirname + `/public/input/image.png`;
+        let uploadPath = __dirname + `/public/images/image.png`;
     
         // Use the mv() method to place the file somewhere on your server
         imageFile.mv(uploadPath, function(err) {

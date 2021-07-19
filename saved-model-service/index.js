@@ -18,7 +18,7 @@ let model;
 let labels;
 let version;
 const currentModelPath = './model';
-const imagePath = './public/input';
+const imagePath = './public/images';
 const newModelPath = './model-new';
 const oldModelPath = './model-old';
 const staticPath = './public/js';
@@ -53,9 +53,9 @@ let ieam = {
   },
   capture: () => {
     ieam.soundEffect(mp3s.snapshot);
-    let arg = `ffmpeg -ss 0.5 -f avfoundation -r 30.000030 -i "0" -t 1 -vframes 1 ./public/input/image.png -y`;
+    let arg = `ffmpeg -ss 0.5 -f avfoundation -r 30.000030 -i "0" -t 1 -vframes 1 ./public/images/image.png -y`;
     if(process.platform !== 'darwin') {
-      // arg = `ffmpeg -i /dev/video0 -vframes 1 -vf "eq=contrast=1.5:brightness=0.5" ./public/input/image.png -y`;
+      // arg = `ffmpeg -i /dev/video0 -vframes 1 -vf "eq=contrast=1.5:brightness=0.5" ./public/images/image.png -y`;
       arg = `fswebcam -r 640x480 --no-banner -S 25 public/input/image.jpg`;
     }
     exec(arg, {maxBuffer: 1024 * 2000}, (err, stdout, stderr) => {
