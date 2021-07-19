@@ -4,6 +4,7 @@ const jsonfile = require('jsonfile');
 const { Observable } = require('rxjs');
 const cp = require('child_process'),
 exec = cp.exec;
+const player = require('play-sound')();
 
 const path = require('path');
 const winston = require('winston');
@@ -37,8 +38,20 @@ process.env.npm_config_cameraOn = false;
 
 console.log('platform ', process.platform)
 
+mp3s = {
+  'snapshot': './public/media/audio-snap.mp3',
+  'gotMail': './public/js/youve-got-mail-sound.mp3',
+  'theForce': './public/js/may-the-force-be-with-you.mp3' 
+};
+
 let ieam = {
+  soundEffect: (mp3) => {
+    player.play(mp3, (err) => {
+      if (err) console.log(`Could not play sound: ${err}`);  
+    });  
+  },
   capture: () => {
+    ieam.soundEffect(mp3s.snapshot);
     let arg = `ffmpeg -ss 0.5 -f avfoundation -r 30.000030 -i "0" -t 1 -vframes 1 ./public/input/image.png -y`;
     if(process.platform !== 'darwin') {
       // arg = `ffmpeg -i /dev/video0 -vframes 1 -vf "eq=contrast=1.5:brightness=0.5" ./public/input/image.png -y`;
@@ -106,7 +119,8 @@ let ieam = {
     console.log('time took: ', elapsedTime);
     console.log('build json...');
     jsonfile.writeFile(`${staticPath}/image.json`, {bbox: predictions, elapsedTime: elapsedTime, version: version}, {spaces: 2});
-    ieam.renameFile(imageFile, `${imagePath}/image-old.png`);  
+    ieam.renameFile(imageFile, `${imagePath}/image-old.png`);
+    ieam.soundEffect(mp3s.theForce);  
   },
   traverse: (dir, done) => {
     var results = [];
@@ -229,6 +243,7 @@ let ieam = {
               next: (v) => {
                 
                   console.log('new model is available, restarting server...');
+                  ieam.soundEffect(mp3s.gotMail);  
                   process.exit(0);
                 
               },   
