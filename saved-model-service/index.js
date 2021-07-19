@@ -40,12 +40,13 @@ console.log('platform ', process.platform)
 
 mp3s = {
   'snapshot': './public/media/audio-snap.mp3',
-  'gotMail': './public/js/youve-got-mail-sound.mp3',
-  'theForce': './public/js/may-the-force-be-with-you.mp3' 
+  'gotMail': './public/media/youve-got-mail-sound.mp3',
+  'theForce': './public/media/may-the-force-be-with-you.mp3' 
 };
 
 let ieam = {
   soundEffect: (mp3) => {
+    console.log(mp3)
     player.play(mp3, (err) => {
       if (err) console.log(`Could not play sound: ${err}`);  
     });  

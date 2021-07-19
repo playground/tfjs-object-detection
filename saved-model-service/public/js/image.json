@@ -11,9 +11,9 @@
       "detectedScore": "1.000"
     }
   ],
-  "elapsedTime": 251.0864970088005,
+  "elapsedTime": 224.36579102277756,
   "version": {
-    "name": "Poor model",
+    "name": "Demo model",
     "version": "1.0.0"
   }
 }
