@@ -235,7 +235,7 @@ let ieam = {
           ieam.resetTimer();
         });
       }
-      else if(modelPath === newModelPath) {
+      else if(modelPath === newModelPath || modelPath === localPath) {
         console.log('iam new')
         ieam.moveFiles(currentModelPath, oldModelPath)
         .subscribe({
