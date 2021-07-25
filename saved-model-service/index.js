@@ -1,9 +1,10 @@
 let tfnode = require('@tensorflow/tfjs-node');
-const {unlinkSync, stat, renameSync, readdir, readdirSync, existsSync, readFileSync} = require('fs');
+const {unlinkSync, stat, renameSync, readdir, readdirSync, existsSync, readFileSync, copyFileSync} = require('fs');
 const jsonfile = require('jsonfile');
 const { Observable } = require('rxjs');
 const cp = require('child_process'),
 exec = cp.exec;
+const player = require('play-sound')();
 
 const path = require('path');
 const winston = require('winston');
@@ -17,7 +18,7 @@ let model;
 let labels;
 let version;
 const currentModelPath = './model';
-const imagePath = './public/input';
+const imagePath = './public/images';
 const newModelPath = './model-new';
 const oldModelPath = './model-old';
 const staticPath = './public/js';
@@ -37,12 +38,25 @@ process.env.npm_config_cameraOn = false;
 
 console.log('platform ', process.platform)
 
+mp3s = {
+  'snapshot': './public/media/audio-snap.mp3',
+  'gotMail': './public/media/youve-got-mail-sound.mp3',
+  'theForce': './public/media/may-the-force-be-with-you.mp3' 
+};
+
 let ieam = {
+  soundEffect: (mp3) => {
+    console.log(mp3)
+    player.play(mp3, (err) => {
+      if (err) console.log(`Could not play sound: ${err}`);  
+    });  
+  },
   capture: () => {
-    let arg = `ffmpeg -ss 0.5 -f avfoundation -r 30.000030 -i "0" -t 1 -vframes 1 ./public/input/image.png -y`;
+    ieam.soundEffect(mp3s.snapshot);
+    let arg = `ffmpeg -ss 0.5 -f avfoundation -r 30.000030 -i "0" -t 1 -vframes 1 ./public/images/image.png -y`;
     if(process.platform !== 'darwin') {
-      // arg = `ffmpeg -i /dev/video0 -vframes 1 -vf "eq=contrast=1.5:brightness=0.5" ./public/input/image.png -y`;
-      arg = `fswebcam -r 640x480 --no-banner -S 25 public/input/image.jpg`;
+      // arg = `ffmpeg -i /dev/video0 -vframes 1 -vf "eq=contrast=1.5:brightness=0.5" ./public/images/image.png -y`;
+      arg = `fswebcam -r 640x480 --no-banner -S 25 public/images/image.jpg`;
     }
     exec(arg, {maxBuffer: 1024 * 2000}, (err, stdout, stderr) => {
       if(!err) {
@@ -106,7 +120,8 @@ let ieam = {
     console.log('time took: ', elapsedTime);
     console.log('build json...');
     jsonfile.writeFile(`${staticPath}/image.json`, {bbox: predictions, elapsedTime: elapsedTime, version: version}, {spaces: 2});
-    ieam.renameFile(imageFile, `${imagePath}/image-old.png`);  
+    ieam.renameFile(imageFile, `${imagePath}/image-old.png`);
+    ieam.soundEffect(mp3s.theForce);  
   },
   traverse: (dir, done) => {
     var results = [];
@@ -158,7 +173,9 @@ let ieam = {
           observer.complete();
         }
         exec(arg, {maxBuffer: 1024 * 2000}, (err, stdout, stderr) => {
-          unlinkSync(`${sharedPath}/${file}`);
+          if(existsSync(`${sharedPath}/${file}`)) {
+            unlinkSync(`${sharedPath}/${file}`);
+          }
           if(!err) {
             observer.next();
             observer.complete();
@@ -183,7 +200,8 @@ let ieam = {
           observer.complete();
         } else {
           console.log(err);
-          observer.error(err);
+          observer.next();
+          observer.complete();
         }
       });
     });    
@@ -197,7 +215,8 @@ let ieam = {
           observer.complete();
         } else {
           console.log(err);
-          observer.error(err);
+          observer.next();
+          observer.complete();
         }
       });
     });    
@@ -209,34 +228,25 @@ let ieam = {
   },
   loadModel: async (modelPath) => {
     try {
-      delete(model);
-      delete(labels);
-      delete(version);
-      count++;
-      const startTime = tfnode.util.now();
-      model = await tfnode.node.loadSavedModel(modelPath);
-      const endTime = tfnode.util.now();
-
-      console.log(`loading time:  ${modelPath}, ${endTime-startTime}`);
-      labels = jsonfile.readFileSync(`${modelPath}/assets/labels.json`);
-      version = jsonfile.readFileSync(`${modelPath}/assets/version.json`);
-      console.log('version: ', version)
-      if(modelPath === newModelPath) {
+      let newVersion = jsonfile.readFileSync(`${modelPath}/assets/version.json`);
+      if(version && version.version === newVersion.version) {
+        ieam.removeFiles(modelPath)
+        .subscribe(() => {
+          ieam.resetTimer();
+        });
+      }
+      else if(modelPath === newModelPath || modelPath === localPath) {
         console.log('iam new')
         ieam.moveFiles(currentModelPath, oldModelPath)
         .subscribe({
           next: (v) => ieam.moveFiles(newModelPath, currentModelPath)
             .subscribe({
               next: (v) => {
-                if(count > 2) {
-                  console.log('new model did not load, restarting server...');
-                  ieam.restart();
-                } else {
-                  console.log('reset timer');
-                  ieam.renameFile(`${imagePath}/image-old.png`, `${imagePath}/image.png`);  
-                  ieam.checkImage();
-                  ieam.resetTimer();  
-                }
+                
+                  console.log('new model is available, restarting server...');
+                  ieam.soundEffect(mp3s.gotMail);  
+                  process.exit(0);
+                
               },   
               error: (e) => {
                 console.log('reset timer');
@@ -248,6 +258,16 @@ let ieam = {
             ieam.resetTimer(); 
           }
         })
+      } else if(modelPath !== newModelPath){
+        count++;
+        const startTime = tfnode.util.now();
+        model = await tfnode.node.loadSavedModel(modelPath);
+        const endTime = tfnode.util.now();
+
+        console.log(`loading time:  ${modelPath}, ${endTime-startTime}`);
+        labels = jsonfile.readFileSync(`${modelPath}/assets/labels.json`);
+        version = jsonfile.readFileSync(`${modelPath}/assets/version.json`);
+        console.log('version: ', version)
       }
     } catch(e) {
       console.log(e);
@@ -297,7 +317,11 @@ let ieam = {
     }, ms);
   },
   initialInference: () => {
-    ieam.renameFile(`${imagePath}/image-old.png`, `${imagePath}/image.png`);  
+    let oldImage = `${imagePath}/image-old.png`;
+    if(!existsSync(oldImage)) {
+      copyFileSync(`${imagePath}/backup.png`, oldImage)
+    }
+    ieam.renameFile(oldImage, `${imagePath}/image.png`);  
   },
   start: () => {
     count = 0;
@@ -317,9 +341,6 @@ let ieam = {
         delete require.cache[id];
       }  
     });
-    tfnode = require('@tensorflow/tfjs-node');
-    ieam.loadModel(currentModelPath);
-    ieam.initialInference();  
 
     state.sockets.forEach((socket, index) => {
       // console.log('Destroying socket', index + 1);
@@ -334,6 +355,13 @@ let ieam = {
       console.log('Server is closed');
       console.log('\n----------------- restarting -------------');
       ieam.start();
+      tfnode = require('@tensorflow/tfjs-node');
+      delete(model);
+      delete(labels);
+      delete(version);
+      ieam.loadModel(currentModelPath)
+      ieam.initialInference();  
+      ieam.setInterval(intervalMS);
     });
   }      
 }

@@ -161,6 +161,6 @@ let ieam = {
       })
       output.innerHTML = objStr;
     });
-    img.src = `/static/input/image-old.png?${new Date().getTime()}`;
+    img.src = `/static/images/image-old.png?${new Date().getTime()}`;
   }  
 }
