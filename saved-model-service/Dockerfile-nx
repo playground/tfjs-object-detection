@@ -2,7 +2,7 @@ FROM roboflow/tfjs-jetson
 
 RUN apt-get update
 RUN apt-get --fix-broken install -y
-RUN apt-get install fswebcam -y
+RUN apt-get install fswebcam -y && apt-get install mpg123 -y
 
 WORKDIR /server
 
