@@ -1,5 +1,5 @@
-let tfnode = require('@tensorflow/tfjs-node');
-const {unlinkSync, stat, renameSync, readdir, readdirSync, existsSync, readFileSync, copyFileSync} = require('fs');
+let tfnode = require('@roboflow/tfjs-jetson');
+const {unlinkSync, stat, renameSync, readdir, readdirSync, existsSync, readFileSync, copyFileSync, mkdirSync} = require('fs');
 const jsonfile = require('jsonfile');
 const { Observable } = require('rxjs');
 const cp = require('child_process'),
@@ -317,6 +317,15 @@ let ieam = {
     }, ms);
   },
   initialInference: () => {
+    if(!existsSync(currentModelPath)) {
+      mkdirSync(currentModelPath);
+    }
+    if(!existsSync(newModelPath)) {
+      mkdirSync(newModelPath);
+    }
+    if(!existsSync(oldModelPath)) {
+      mkdirSync(oldModelPath);
+    }
     let oldImage = `${imagePath}/image-old.png`;
     if(!existsSync(oldImage)) {
       copyFileSync(`${imagePath}/backup.png`, oldImage)
