@@ -12,7 +12,7 @@ const find = (name) => {
       let child = exec('node index.js', {maxBuffer: 1024 * 2000}, (err, stdout, stderr) => {
         console.log('restarting node index.js')
         console.log('there are %s node process(es)', list.length);
-        sleep(10000).then(() => {
+        sleep(5000).then(() => {
           setCheckInterval(10000);
         })
       });
