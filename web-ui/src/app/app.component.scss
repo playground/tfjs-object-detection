@@ -1,0 +1,27 @@
+.hzn-card {
+  max-width: 400px;
+}
+
+.hzn-header-image {
+  background-image: url('https://github.com/open-horizon/artwork/blob/master/greyscale/open-horizon-greyscale.jpg');
+  background-size: cover;
+}
+
+.hzn-button-row {
+  display: table-cell;
+  width: 100%;
+  margin-left: -48px;
+}
+
+.button_spacer {
+  float: right;
+  width: 25px;
+  height: 25px;
+}
+
+.static-text {
+  ::ng-deep .mat-card-subtitle {
+    margin-top: 1px;
+  }
+}
+
