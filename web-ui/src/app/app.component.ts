@@ -54,21 +54,10 @@ export class AppComponent implements OnInit {
     if(this.selectedFile.length > 0) {
       let formData = new FormData();
       formData.append('imageFile', this.selectedFile);
-        let xhr = new XMLHttpRequest();
-        xhr.onload = function(oEvent) {
-          if (xhr.status == 200) {
-          //   output.innerHTML = "Uploaded!";
-          //   this.loadJson('/static/js/image.json');
-          // } else {
-          //   output.innerHTML = "Error " + xhr.status + " occurred when trying to upload your file.<br \/>";
-          // }
-          // this.resetTimer();
-        };
-
-        xhr.open("POST", "/upload");
-        xhr.send(formData);
-      }
-
+      this.http.post<any>('http://localhost:3000/upload', formData)
+      .subscribe((res) => {
+        console.log(res)
+      }, (err) => console.log(err))
     }
 
     // let $form = document.forms.namedItem('uploadForm');

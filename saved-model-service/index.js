@@ -1,4 +1,4 @@
-let tfnode = require('@roboflow/tfjs-jetson');
+let tfnode = require('@tensorflow/tfjs-node');
 const {unlinkSync, stat, renameSync, readdir, readdirSync, existsSync, readFileSync, copyFileSync, mkdirSync} = require('fs');
 const jsonfile = require('jsonfile');
 const { Observable } = require('rxjs');
