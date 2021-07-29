@@ -17,7 +17,7 @@ export class AppComponent implements OnInit {
   prevJson!: any;
   timer!: number;
   intervalMS = 5000;
-  selectedFile: string = '';
+  selectedFile: any = {};
 
   constructor(private http: HttpClient) {
 
@@ -27,7 +27,7 @@ export class AppComponent implements OnInit {
   onInputChange(evt: any) {
     let files = evt.currentTarget.files;
     if(files) {
-      this.selectedFile = files[0].name;
+      this.selectedFile = files[0];
     }
   }
   loadJson(file: any) {
@@ -51,10 +51,10 @@ export class AppComponent implements OnInit {
     console.log(this.prevJson);
     clearInterval(this.timer);
     console.log(f);
-    if(this.selectedFile.length > 0) {
+    if(this.selectedFile.name.length > 0) {
       let formData = new FormData();
       formData.append('imageFile', this.selectedFile);
-      this.http.post<any>('http://localhost:3000/upload', formData)
+      this.http.post<any>('/upload', formData)
       .subscribe((res) => {
         console.log(res)
       }, (err) => console.log(err))
@@ -78,7 +78,7 @@ export class AppComponent implements OnInit {
     //       }
     //       this.resetTimer();
     //     };
-  
+
     //     xhr.open("POST", "/upload");
     //     xhr.send(formData);
     //   }
@@ -88,10 +88,10 @@ export class AppComponent implements OnInit {
     this.timer = setInterval(async () => {
       this.loadJson('/static/js/image.json');
     }, ms);
-  }    
+  }
   resetTimer() {
     clearInterval(this.timer);
-    this.setInterval(this.intervalMS);  
+    this.setInterval(this.intervalMS);
   }
   drawBBox() {
     console.log('choose a file')
