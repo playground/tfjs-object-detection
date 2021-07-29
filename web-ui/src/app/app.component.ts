@@ -1,4 +1,4 @@
-import { Component, ViewChild, ElementRef, OnInit } from '@angular/core';
+import { Component, ViewChild, ElementRef, OnInit, AfterViewInit } from '@angular/core';
 import { NgForm } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 
@@ -8,9 +8,9 @@ import { HttpClient } from '@angular/common/http';
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss']
 })
-export class AppComponent implements OnInit {
-  @ViewChild('canvas', {static: true})
-  canvas: ElementRef<HTMLCanvasElement>;
+export class AppComponent implements OnInit, AfterViewInit {
+  @ViewChild('canvas', {static: false, read: ElementRef})
+  canvas: ElementRef;
 
   ctx: CanvasRenderingContext2D;
   title = 'web-ui';
@@ -18,22 +18,30 @@ export class AppComponent implements OnInit {
   timer!: number;
   intervalMS = 5000;
   selectedFile: any = {};
+  uploaded = '';
 
   constructor(private http: HttpClient) {
 
   }
   ngOnInit(): void {
+
+  }
+  ngAfterViewInit(): void {
+    this.ctx = this.canvas.nativeElement.getContext('2d');
+    this.drawImage();
   }
   onInputChange(evt: any) {
     let files = evt.currentTarget.files;
     if(files) {
       this.selectedFile = files[0];
+      this.uploaded = '';
     }
   }
   loadJson(file: any) {
     this.http.get(file)
     .subscribe((data) => {
       console.log(data)
+      this.prevJson = data;
     });
     // fetch(file).then(async (res) => {
     //   let json = await res.json();
@@ -43,6 +51,18 @@ export class AppComponent implements OnInit {
     //     console.log(this.prevJson)
     //   }
     // })
+  }
+  drawImage() {
+    let img = new Image();
+    img.addEventListener('load', () => {
+      let canvas = this.ctx.canvas;
+      const { naturalWidth: width, naturalHeight: height } = img;
+      console.log('loaded', width, height)
+      canvas.width = width;
+      canvas.height = height;
+      this.ctx.drawImage(img, 0, 0, width, height);
+    });
+    img.src = `/static/images/image-old.png?${new Date().getTime()}`;
   }
   toggleCamera() {
 
@@ -57,32 +77,13 @@ export class AppComponent implements OnInit {
       this.http.post<any>('/upload', formData)
       .subscribe((res) => {
         console.log(res)
-      }, (err) => console.log(err))
+        this.uploaded = " - Uploaded!";
+        this.loadJson('/static/js/image.json');
+      }, (err) => {
+        console.log(err);
+        this.uploaded = " - Upload failed!";
+      });
     }
-
-    // let $form = document.forms.namedItem('uploadForm');
-    // $form.addEventListener('submit', (evt) => {
-    //   evt.preventDefault();
-    //   let output = document.querySelector('div.output')
-    //   const files = document.querySelector('[name=imageFile]').files;
-    //   if(files[0]) {
-    //     let formData = new FormData();
-    //     formData.append('imageFile', files[0]);
-    //     let xhr = new XMLHttpRequest();
-    //     xhr.onload = function(oEvent) {
-    //       if (xhr.status == 200) {
-    //         output.innerHTML = "Uploaded!";
-    //         this.loadJson('/static/js/image.json');
-    //       } else {
-    //         output.innerHTML = "Error " + xhr.status + " occurred when trying to upload your file.<br \/>";
-    //       }
-    //       this.resetTimer();
-    //     };
-
-    //     xhr.open("POST", "/upload");
-    //     xhr.send(formData);
-    //   }
-    // });
   }
   setInterval(ms: number) {
     this.timer = setInterval(async () => {

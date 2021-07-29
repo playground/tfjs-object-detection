@@ -360,10 +360,11 @@
             </button>
           </span>
           </form>
-          <mat-card-subtitle style="margin-top:1px;">{{selectedFile.name}}</mat-card-subtitle>
+          <mat-card-subtitle style="margin-top:1px;">{{selectedFile.name}}{{uploaded}}</mat-card-subtitle>
         </div>
 
     </mat-card-header>
+    <canvas #canvas></canvas>
     <img mat-card-image src="https://material.angular.io/assets/img/examples/shiba2.jpg" alt="Photo to inference">
     <mat-card-content>
       <p>
@@ -377,10 +378,6 @@
       <button mat-button>SHARE</button>
     </mat-card-actions>
   </mat-card>
-
-
-
-  <canvas id="canvas"></canvas>
 
 </div>
 
