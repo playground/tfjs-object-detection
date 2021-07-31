@@ -19,7 +19,7 @@ export class AppComponent implements OnInit, AfterViewInit {
   @ViewChild('mat_card_header', {static: false, read: ElementRef})
   matCard: ElementRef;
   @ViewChild('camera', {static: false, read: ElementRef})
-  camera: Element;
+  camera: ElementRef;
 
   columns: string[] = ['label', 'score', 'min', 'max'];
   dataSource: any[] = [];
@@ -123,16 +123,13 @@ export class AppComponent implements OnInit, AfterViewInit {
   toggleCamera() {
     const state = this.camera.nativeElement.innerHTML === 'camera_alt';
     console.log('camera')
-    // clearInterval(this.timer);
-    // const state = e.currentTarget.defaultValue === 'Camera Off';
-    // e.currentTarget.defaultValue = state ? 'Camera On' : 'Camera Off';
-    // fetch(`/camera?on=${state}`)
-    //   .then((res) => {
-    //     ieam.resetTimer();
-    //     console.log(res);
-    //   });
-    // state ? document.querySelector('.submit').disabled = true : document.querySelector('.submit').disabled = false
-
+    clearInterval(this.timer);
+    this.camera.nativeElement.innerHTML = state ? 'camera' : 'camera_alt';
+    this.http.get(`/camera?on=${state}`)
+    .subscribe((data) => {
+      this.resetTimer();
+      console.log('json', data)
+    });
   }
   onSubmit(f: NgForm) {
     console.log(this.prevJson);
