@@ -2,7 +2,12 @@ import { Component, ViewChild, ElementRef, OnInit, AfterViewInit, HostListener }
 import { NgForm } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 
-
+export interface BboxElement {
+  label: string;
+  score: number;
+  min: string;
+  max: string;
+}
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
@@ -13,7 +18,11 @@ export class AppComponent implements OnInit, AfterViewInit {
   canvas: ElementRef;
   @ViewChild('mat_card_header', {static: false, read: ElementRef})
   matCard: ElementRef;
+  @ViewChild('camera', {static: false, read: ElementRef})
+  camera: Element;
 
+  columns: string[] = ['label', 'score', 'min', 'max'];
+  dataSource: any[] = [];
   ctx: CanvasRenderingContext2D;
   title = 'web-ui';
   prevJson!: any;
@@ -54,18 +63,13 @@ export class AppComponent implements OnInit, AfterViewInit {
   loadJson(file: any) {
     this.http.get(file)
     .subscribe((data) => {
-      console.log(data)
-      this.prevJson = data;
-      this.drawImage();
+      console.log('json', data)
+      if(JSON.stringify(data) !== JSON.stringify(this.prevJson)) {
+        console.log(data)
+        this.prevJson = data;
+        this.drawImage();
+      }
     });
-    // fetch(file).then(async (res) => {
-    //   let json = await res.json();
-    //   if(JSON.stringify(json) !== JSON.stringify(this.prevJson)) {
-    //     this.prevJson = json;
-    //     this.drawBBox();
-    //     console.log(this.prevJson)
-    //   }
-    // })
   }
   drawImage() {
     let objDetected:any = {};
@@ -77,13 +81,14 @@ export class AppComponent implements OnInit, AfterViewInit {
       let { naturalWidth: width, naturalHeight: height } = img;
       console.log('loaded', width, height)
       let aRatio = width/height;
-      canvas.width = this.matCardWidth - 10;
+      canvas.width = this.matCardWidth - 2;
       canvas.height = canvas.width / aRatio;
       this.ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
       height = canvas.height;
       width = canvas.width;
       aRatio = width/height;
+      this.dataSource = [];
       this.prevJson.bbox.forEach((box: any) => {
         let bbox = box.detectedBox;
         if(objDetected[box.detectedClass]) {
@@ -91,24 +96,12 @@ export class AppComponent implements OnInit, AfterViewInit {
         } else {
           objDetected[box.detectedClass] = 1;
         }
-        // row = document.createElement('tr');
-        // cell = document.createElement('td');
-        // cellText = document.createTextNode(box.detectedClass);
-        // cell.appendChild(cellText);
-        // row.appendChild(cell)
-        // cell = document.createElement('td');
-        // cellText = document.createTextNode(box.detectedScore);
-        // cell.appendChild(cellText);
-        // row.appendChild(cell);
-        // cell = document.createElement('td');
-        // cellText = document.createTextNode(`(${bbox[0]},${bbox[1]})`);
-        // cell.appendChild(cellText);
-        // row.appendChild(cell);
-        // cell = document.createElement('td');
-        // cellText = document.createTextNode(`(${bbox[2]},${bbox[3]})`);
-        // cell.appendChild(cellText);
-        // row.appendChild(cell);
-        // table.appendChild(row);
+        this.dataSource.push({
+          label: box.detectedClass,
+          score: parseFloat(box.detectedScore).toFixed(2),
+          min: `(${(bbox[0]/aRatio).toFixed(2)},${(bbox[1]/aRatio).toFixed(2)})`,
+          max: `(${(bbox[2]/aRatio).toFixed(2)},${(bbox[3]/aRatio).toFixed(2)})`
+        })
 
         this.ctx.fillStyle = 'rgba(255,255,255,0.2)';
         this.ctx.strokeStyle = 'yellow';
@@ -128,6 +121,17 @@ export class AppComponent implements OnInit, AfterViewInit {
 
   }
   toggleCamera() {
+    const state = this.camera.nativeElement.innerHTML === 'camera_alt';
+    console.log('camera')
+    // clearInterval(this.timer);
+    // const state = e.currentTarget.defaultValue === 'Camera Off';
+    // e.currentTarget.defaultValue = state ? 'Camera On' : 'Camera Off';
+    // fetch(`/camera?on=${state}`)
+    //   .then((res) => {
+    //     ieam.resetTimer();
+    //     console.log(res);
+    //   });
+    // state ? document.querySelector('.submit').disabled = true : document.querySelector('.submit').disabled = false
 
   }
   onSubmit(f: NgForm) {
@@ -141,7 +145,7 @@ export class AppComponent implements OnInit, AfterViewInit {
       .subscribe((res) => {
         console.log(res)
         this.uploaded = " - Uploaded!";
-        this.loadJson('/static/js/image.json');
+        this.resetTimer();
       }, (err) => {
         console.log(err);
         this.uploaded = " - Upload failed!";

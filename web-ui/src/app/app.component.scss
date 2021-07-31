@@ -1,5 +1,5 @@
 .hzn-card {
-  max-width: 400px;
+  max-width: 100%;
 }
 
 .hzn-header-image {
@@ -9,8 +9,9 @@
 
 .hzn-button-row {
   display: table-cell;
-  width: 93%;
+  width: 97%;
   margin-left: -28px;
+  margin-top: -28px;
 }
 
 .button_spacer {
@@ -25,3 +26,10 @@
   }
 }
 
+table {
+  width: 100%;
+}
+
+th.mat-sort-header-sorted {
+  color: black;
+}
