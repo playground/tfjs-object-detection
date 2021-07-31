@@ -2,16 +2,26 @@
   "bbox": [
     {
       "detectedBox": [
-        "0.026",
-        "0.328",
-        "0.215",
-        "0.538"
+        "0.562",
+        "0.396",
+        "0.890",
+        "0.650"
       ],
       "detectedClass": "hard-hat",
-      "detectedScore": "1.000"
+      "detectedScore": "0.980"
+    },
+    {
+      "detectedBox": [
+        "0.011",
+        "0.524",
+        "0.257",
+        "0.833"
+      ],
+      "detectedClass": "hard-hat",
+      "detectedScore": "0.671"
     }
   ],
-  "elapsedTime": 224.9383690059185,
+  "elapsedTime": 203.15798097848892,
   "version": {
     "name": "Demo model",
     "version": "1.0.0"

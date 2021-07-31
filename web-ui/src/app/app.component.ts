@@ -1,6 +1,7 @@
 import { Component, ViewChild, ElementRef, OnInit, AfterViewInit, HostListener } from '@angular/core';
 import { NgForm } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
+import { MatSnackBar, MatSnackBarHorizontalPosition, MatSnackBarVerticalPosition, MatSnackBarConfig } from '@angular/material/snack-bar';
 
 export interface BboxElement {
   label: string;
@@ -20,6 +21,8 @@ export class AppComponent implements OnInit, AfterViewInit {
   matCard: ElementRef;
   @ViewChild('camera', {static: false, read: ElementRef})
   camera: ElementRef;
+  @ViewChild('front_camera', {static: false, read: ElementRef})
+  frontCamera: ElementRef;
 
   columns: string[] = ['label', 'score', 'min', 'max'];
   dataSource: any[] = [];
@@ -32,10 +35,14 @@ export class AppComponent implements OnInit, AfterViewInit {
   uploaded = '';
   matCardHeight: number;
   matCardWidth: number;
+  infoText: string;
+  horizontalPosition: MatSnackBarHorizontalPosition = 'center';
+  verticalPosition: MatSnackBarVerticalPosition = 'bottom';
 
-  constructor(private http: HttpClient) {
-
-  }
+  constructor(
+    private http: HttpClient,
+    private snackBar: MatSnackBar
+  ){}
   ngOnInit(): void {
 
   }
@@ -52,6 +59,13 @@ export class AppComponent implements OnInit, AfterViewInit {
   getMatCardSize() {
     this.matCardHeight = this.matCard.nativeElement.offsetHeight;
     this.matCardWidth = this.matCard.nativeElement.offsetWidth;
+  }
+  showMessage(msg: string, action: string = 'OK') {
+    let config = new MatSnackBarConfig();
+    config.verticalPosition = this.verticalPosition;
+    config.horizontalPosition = this.horizontalPosition;
+    config.duration = 3000;
+    this.snackBar.open(msg, action, config);
   }
   onInputChange(evt: any) {
     let files = evt.currentTarget.files;
@@ -73,7 +87,10 @@ export class AppComponent implements OnInit, AfterViewInit {
   }
   drawImage() {
     let objDetected:any = {};
-    let vobj = this.prevJson.version;
+    let vobj = this.prevJson.version || undefined;
+    let version = vobj ? `Model: ${vobj.name} v${vobj.version}` : 'version missing';
+    version += ` | Inference time: ${parseFloat(this.prevJson.elapsedTime).toFixed(2)}`;
+    this.infoText = version;
 
     let img = new Image();
     img.addEventListener('load', () => {
@@ -120,7 +137,11 @@ export class AppComponent implements OnInit, AfterViewInit {
     console.log('choose a file')
 
   }
-  toggleCamera() {
+  toggleCamera(evt: Event) {
+    evt.preventDefault();
+    if(this.frontCamera.nativeElement.innerHTML !== 'camera_front') {
+      this.showMessage('Please turn of your camera before turning on server camera');
+    }
     const state = this.camera.nativeElement.innerHTML === 'camera_alt';
     console.log('camera')
     clearInterval(this.timer);
@@ -131,11 +152,26 @@ export class AppComponent implements OnInit, AfterViewInit {
       console.log('json', data)
     });
   }
-  onSubmit(f: NgForm) {
-    console.log(this.prevJson);
+  toggleClientCamera(evt: Event) {
+    evt.preventDefault();
+    if(this.camera.nativeElement.innerHTML !== 'camera_alt') {
+      this.showMessage('Please turn of server camera before turning on client camera');
+    }
+    const state = this.frontCamera.nativeElement.innerHTML === 'camera_front';
+    console.log('client camera')
     clearInterval(this.timer);
-    console.log(f);
-    if(this.selectedFile.name.length > 0) {
+    this.frontCamera.nativeElement.innerHTML = state ? 'camera' : 'camera_front';
+    this.http.get(`/camera?on=${state}`)
+    .subscribe((data) => {
+      this.resetTimer();
+      console.log('json', data)
+    });
+  }
+  onSubmit(f: NgForm) {
+    const allowedFiles = [".png", ".jpg", ".gif"];
+    const regex = new RegExp("([a-zA-Z0-9\s_\\.\-:])+(" + allowedFiles.join('|') + ")$");
+    if(this.selectedFile && regex.test(this.selectedFile.name?.toLowerCase())) {
+      clearInterval(this.timer);
       let formData = new FormData();
       formData.append('imageFile', this.selectedFile);
       this.http.post<any>('/upload', formData)
@@ -147,6 +183,8 @@ export class AppComponent implements OnInit, AfterViewInit {
         console.log(err);
         this.uploaded = " - Upload failed!";
       });
+    } else {
+      this.showMessage('Supported files are: jpg, png, gif, try again.');
     }
   }
   setInterval(ms: number) {
