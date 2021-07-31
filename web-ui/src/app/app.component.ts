@@ -2,6 +2,8 @@ import { Component, ViewChild, ElementRef, OnInit, AfterViewInit, HostListener }
 import { NgForm } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { MatSnackBar, MatSnackBarHorizontalPosition, MatSnackBarVerticalPosition, MatSnackBarConfig } from '@angular/material/snack-bar';
+import {WebcamImage, WebcamInitError, WebcamUtil} from 'ngx-webcam';
+import {Subject, Observable} from 'rxjs';
 
 export interface BboxElement {
   label: string;
@@ -38,13 +40,22 @@ export class AppComponent implements OnInit, AfterViewInit {
   infoText: string;
   horizontalPosition: MatSnackBarHorizontalPosition = 'center';
   verticalPosition: MatSnackBarVerticalPosition = 'bottom';
+  webcamImage: WebcamImage = null;
+  private trigger: Subject<void> = new Subject<void>();
+  showCanvas = true;
+  showWebcam = false;
+  cameraHeight: number;
+  cameraWidth: number;
 
   constructor(
     private http: HttpClient,
     private snackBar: MatSnackBar
   ){}
   ngOnInit(): void {
-
+    WebcamUtil.getAvailableVideoInputs()
+      .then((mediaDevices: MediaDeviceInfo[]) => {
+        // this.multipleWebcamsAvailable = mediaDevices && mediaDevices.length > 1;
+      });
   }
   ngAfterViewInit(): void {
     this.getMatCardSize();
@@ -98,8 +109,8 @@ export class AppComponent implements OnInit, AfterViewInit {
       let { naturalWidth: width, naturalHeight: height } = img;
       console.log('loaded', width, height)
       let aRatio = width/height;
-      canvas.width = this.matCardWidth - 2;
-      canvas.height = canvas.width / aRatio;
+      this.cameraWidth = canvas.width = this.matCardWidth - 2;
+      this.cameraHeight = canvas.height = canvas.width / aRatio;
       this.ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
       height = canvas.height;
@@ -137,11 +148,16 @@ export class AppComponent implements OnInit, AfterViewInit {
     console.log('choose a file')
 
   }
+  hideCamera() {
+    this.frontCamera.nativeElement.innerHTML = 'camera_front';
+    this.showWebcam = false;
+  }
   toggleCamera(evt: Event) {
     evt.preventDefault();
-    if(this.frontCamera.nativeElement.innerHTML !== 'camera_front') {
-      this.showMessage('Please turn of your camera before turning on server camera');
-    }
+    // if(this.frontCamera.nativeElement.innerHTML !== 'camera_front') {
+    //   this.showMessage('Please turn of your camera before turning on server camera');
+    // }
+    this.hideCamera();
     const state = this.camera.nativeElement.innerHTML === 'camera_alt';
     console.log('camera')
     clearInterval(this.timer);
@@ -152,40 +168,84 @@ export class AppComponent implements OnInit, AfterViewInit {
       console.log('json', data)
     });
   }
+  dataURItoBlob(dataURI: any, type: string) {
+    const byteString = window.atob(dataURI);
+    const arrayBuffer = new ArrayBuffer(byteString.length);
+    const int8Array = new Uint8Array(arrayBuffer);
+    for (let i = 0; i < byteString.length; i++) {
+      int8Array[i] = byteString.charCodeAt(i);
+     }
+    const blob = new Blob([int8Array], { type: type });
+   return blob;
+  }
+  handleImage(webcamImage: WebcamImage): void {
+    this.webcamImage = webcamImage;
+    let data = webcamImage.imageAsDataUrl.split(',');
+    let dataType = data[0].split(';');
+    let type = dataType[0].split(':')[1];
+    const imageBlob = this.dataURItoBlob(data[1], type);
+    let imageFile = new File([imageBlob], 'snapshot.jpg', {type: type});
+    this.uploadPhoto(imageFile);
+  }
+  public triggerSnapshot(): void {
+    this.trigger.next();
+  }
+  public get triggerObservable(): Observable<void> {
+    return this.trigger.asObservable();
+  }
   toggleClientCamera(evt: Event) {
     evt.preventDefault();
     if(this.camera.nativeElement.innerHTML !== 'camera_alt') {
       this.showMessage('Please turn of server camera before turning on client camera');
     }
-    const state = this.frontCamera.nativeElement.innerHTML === 'camera_front';
+    this.showWebcam = true;
+    this.frontCamera.nativeElement.innerHTML = 'camera';
     console.log('client camera')
-    clearInterval(this.timer);
-    this.frontCamera.nativeElement.innerHTML = state ? 'camera' : 'camera_front';
-    this.http.get(`/camera?on=${state}`)
-    .subscribe((data) => {
-      this.resetTimer();
-      console.log('json', data)
-    });
+    this.triggerSnapshot();
+    // clearInterval(this.timer);
+    // this.frontCamera.nativeElement.innerHTML = state ? 'camera' : 'camera_front';
+    // this.triggerSnapshot();
+    // this.http.get(`/camera?on=${state}`)
+    // .subscribe((data) => {
+    //   this.resetTimer();
+    //   console.log('json', data)
+    // });
   }
   onSubmit(f: NgForm) {
     const allowedFiles = [".png", ".jpg", ".gif"];
     const regex = new RegExp("([a-zA-Z0-9\s_\\.\-:])+(" + allowedFiles.join('|') + ")$");
     if(this.selectedFile && regex.test(this.selectedFile.name?.toLowerCase())) {
-      clearInterval(this.timer);
-      let formData = new FormData();
-      formData.append('imageFile', this.selectedFile);
-      this.http.post<any>('/upload', formData)
-      .subscribe((res) => {
-        console.log(res)
-        this.uploaded = " - Uploaded!";
-        this.resetTimer();
-      }, (err) => {
-        console.log(err);
-        this.uploaded = " - Upload failed!";
-      });
+      this.uploadPhoto(this.selectedFile);
+      // clearInterval(this.timer);
+      // let formData = new FormData();
+      // formData.append('imageFile', this.selectedFile);
+      // this.http.post<any>('/upload', formData)
+      // .subscribe((res) => {
+      //   console.log(res)
+      //   this.uploaded = " - Uploaded!";
+      //   this.resetTimer();
+      // }, (err) => {
+      //   console.log(err);
+      //   this.uploaded = " - Upload failed!";
+      // });
     } else {
       this.showMessage('Supported files are: jpg, png, gif, try again.');
     }
+  }
+  uploadPhoto(imageFile: any) {
+    clearInterval(this.timer);
+    let formData = new FormData();
+    formData.append('imageFile', imageFile);
+    this.http.post<any>('/upload', formData)
+    .subscribe((res) => {
+      console.log(res)
+      this.uploaded = " - Uploaded!";
+      this.resetTimer();
+    }, (err) => {
+      console.log(err);
+      this.uploaded = " - Upload failed!";
+    });
+
   }
   setInterval(ms: number) {
     this.timer = setInterval(async () => {

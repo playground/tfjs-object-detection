@@ -65,7 +65,8 @@
     </mat-card-header>
     <!-- <img mat-card-image src="https://material.angular.io/assets/img/examples/shiba2.jpg" alt="Photo to inference"> -->
     <mat-card-content #mat_card_content>
-      <canvas #canvas></canvas>
+      <webcam ([height])="cameraHeight" ([width])="cameraWidth" [trigger]="triggerObservable" (imageCapture)="handleImage($event)" *ngIf="showWebcam"></webcam>
+      <canvas #canvas *ngIf="showCanvas"></canvas>
       <mat-card-subtitle style="margin-top:1px;">{{infoText}}</mat-card-subtitle>
 
       <table mat-table [dataSource]="dataSource" class="mat-elevation-z8">

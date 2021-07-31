@@ -10,6 +10,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatTableModule } from '@angular/material/table';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { HttpClientModule } from '@angular/common/http';
+import { WebcamModule } from 'ngx-webcam';
 
 @NgModule({
   declarations: [
@@ -25,7 +26,8 @@ import { HttpClientModule } from '@angular/common/http';
     MatCardModule,
     MatTableModule,
     MatSnackBarModule,
-    HttpClientModule
+    HttpClientModule,
+    WebcamModule
   ],
   providers: [],
   bootstrap: [AppComponent]
