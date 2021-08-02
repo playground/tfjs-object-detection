@@ -52,10 +52,10 @@ export class AppComponent implements OnInit, AfterViewInit {
     private snackBar: MatSnackBar
   ){}
   ngOnInit(): void {
-    WebcamUtil.getAvailableVideoInputs()
-      .then((mediaDevices: MediaDeviceInfo[]) => {
-        // this.multipleWebcamsAvailable = mediaDevices && mediaDevices.length > 1;
-      });
+    // WebcamUtil.getAvailableVideoInputs()
+    //   .then((mediaDevices: MediaDeviceInfo[]) => {
+    //     // this.multipleWebcamsAvailable = mediaDevices && mediaDevices.length > 1;
+    //   });
   }
   ngAfterViewInit(): void {
     this.getMatCardSize();
