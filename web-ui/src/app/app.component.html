@@ -65,7 +65,8 @@
     </mat-card-header>
     <!-- <img mat-card-image src="https://material.angular.io/assets/img/examples/shiba2.jpg" alt="Photo to inference"> -->
     <mat-card-content #mat_card_content>
-      <webcam [height]="cameraHeight" [width]="cameraWidth" [trigger]="triggerObservable" (imageCapture)="handleImage($event)" *ngIf="showWebcam"></webcam>
+      <webcam [height]="cameraHeight" [width]="cameraWidth" [trigger]="triggerObservable" (imageCapture)="handleImage($event)" *ngIf="showWebcam" [allowCameraSwitch]="allowCameraSwitch" [switchCamera]="nextWebcamObservable"
+      (cameraSwitched)="cameraWasSwitched($event)"></webcam>
       <canvas #canvas *ngIf="showCanvas"></canvas>
       <mat-card-subtitle style="margin-top:1px;">{{infoText}}</mat-card-subtitle>
 

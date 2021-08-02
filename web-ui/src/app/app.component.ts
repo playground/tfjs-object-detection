@@ -42,6 +42,9 @@ export class AppComponent implements OnInit, AfterViewInit {
   verticalPosition: MatSnackBarVerticalPosition = 'bottom';
   webcamImage: WebcamImage = null;
   private trigger: Subject<void> = new Subject<void>();
+  private nextWebcam: Subject<boolean|string> = new Subject<boolean|string>();
+  allowCameraSwitch = true;
+  deviceId: string;
   showCanvas = true;
   showWebcam = false;
   cameraHeight: number = 261;
@@ -109,8 +112,8 @@ export class AppComponent implements OnInit, AfterViewInit {
       let { naturalWidth: width, naturalHeight: height } = img;
       console.log('loaded', width, height)
       let aRatio = width/height;
-      canvas.width = this.matCardWidth - 2;
-      canvas.height = canvas.width / aRatio;
+      this.cameraWidth = canvas.width = this.matCardWidth - 2;
+      this.cameraHeight = canvas.height = canvas.width / aRatio;
       this.ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
       height = canvas.height;
@@ -202,6 +205,19 @@ export class AppComponent implements OnInit, AfterViewInit {
     this.frontCamera.nativeElement.innerHTML = 'camera';
     console.log('client camera')
     this.triggerSnapshot();
+  }
+  showNextWebcam(directionOrDeviceId: boolean|string): void {
+    // true => move forward through devices
+    // false => move backwards through devices
+    // string => move to device with given deviceId
+    this.nextWebcam.next(directionOrDeviceId);
+  }
+  cameraWasSwitched(deviceId: string): void {
+    console.log('active device: ' + deviceId);
+    this.deviceId = deviceId;
+  }
+  public get nextWebcamObservable(): Observable<boolean|string> {
+    return this.nextWebcam.asObservable();
   }
   onSubmit(f: NgForm) {
     const allowedFiles = [".png", ".jpg", ".gif"];
