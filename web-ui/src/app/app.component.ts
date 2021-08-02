@@ -44,8 +44,8 @@ export class AppComponent implements OnInit, AfterViewInit {
   private trigger: Subject<void> = new Subject<void>();
   showCanvas = true;
   showWebcam = false;
-  cameraHeight: number;
-  cameraWidth: number;
+  cameraHeight: number = 261;
+  cameraWidth: number = 466;
 
   constructor(
     private http: HttpClient,
@@ -109,8 +109,8 @@ export class AppComponent implements OnInit, AfterViewInit {
       let { naturalWidth: width, naturalHeight: height } = img;
       console.log('loaded', width, height)
       let aRatio = width/height;
-      this.cameraWidth = canvas.width = this.matCardWidth - 2;
-      this.cameraHeight = canvas.height = canvas.width / aRatio;
+      canvas.width = this.matCardWidth - 2;
+      canvas.height = canvas.width / aRatio;
       this.ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
       height = canvas.height;
@@ -202,32 +202,12 @@ export class AppComponent implements OnInit, AfterViewInit {
     this.frontCamera.nativeElement.innerHTML = 'camera';
     console.log('client camera')
     this.triggerSnapshot();
-    // clearInterval(this.timer);
-    // this.frontCamera.nativeElement.innerHTML = state ? 'camera' : 'camera_front';
-    // this.triggerSnapshot();
-    // this.http.get(`/camera?on=${state}`)
-    // .subscribe((data) => {
-    //   this.resetTimer();
-    //   console.log('json', data)
-    // });
   }
   onSubmit(f: NgForm) {
     const allowedFiles = [".png", ".jpg", ".gif"];
     const regex = new RegExp("([a-zA-Z0-9\s_\\.\-:])+(" + allowedFiles.join('|') + ")$");
-    if(this.selectedFile && regex.test(this.selectedFile.name?.toLowerCase())) {
+    if(this.selectedFile && this.selectedFile.name && regex.test(this.selectedFile.name.toLowerCase())) {
       this.uploadPhoto(this.selectedFile);
-      // clearInterval(this.timer);
-      // let formData = new FormData();
-      // formData.append('imageFile', this.selectedFile);
-      // this.http.post<any>('/upload', formData)
-      // .subscribe((res) => {
-      //   console.log(res)
-      //   this.uploaded = " - Uploaded!";
-      //   this.resetTimer();
-      // }, (err) => {
-      //   console.log(err);
-      //   this.uploaded = " - Upload failed!";
-      // });
     } else {
       this.showMessage('Supported files are: jpg, png, gif, try again.');
     }
