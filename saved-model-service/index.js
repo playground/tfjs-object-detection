@@ -29,6 +29,7 @@ let timer;
 const intervalMS = 10000;
 let count = 0;
 let previousImage;
+let confidentCutoff = 0.85;
 
 const state = {
   server: null,
@@ -108,7 +109,7 @@ let ieam = {
     let predictions = [];
     const elapsedTime = endTime - startTime;
     for (let i = 0; i < scores[0].length; i++) {
-      if (scores[0][i] > 0.6) {
+      if (scores[0][i] > confidentCutoff) {
         predictions.push({
           detectedBox: boxes[0][i].map((el)=>el.toFixed(3)),
           detectedClass: labels[classes[0][i]],
@@ -119,7 +120,7 @@ let ieam = {
     console.log('predictions:', predictions.length, predictions[0]);
     console.log('time took: ', elapsedTime);
     console.log('build json...');
-    jsonfile.writeFile(`${staticPath}/image.json`, {bbox: predictions, elapsedTime: elapsedTime, version: version}, {spaces: 2});
+    jsonfile.writeFile(`${staticPath}/image.json`, {bbox: predictions, elapsedTime: elapsedTime, version: version, confidentCutoff: confidentCutoff}, {spaces: 2});
     ieam.renameFile(imageFile, `${imagePath}/image-old.png`);
     ieam.soundEffect(mp3s.theForce);  
   },

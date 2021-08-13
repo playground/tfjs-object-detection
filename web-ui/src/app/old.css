@@ -107,6 +107,7 @@ p {
 .content {
   display: flex;
   margin: 82px auto 32px;
+  padding: 0 16px;
   max-width: 960px;
   flex-direction: column;
 }
@@ -135,16 +136,7 @@ a:hover {
   color: #125699;
 }
 
-.hzn-form-field-select{
-  width: 80px;
-  height: 20px;
-  font-size: 12px;
-}
-
-.hzn-label {
-  font-size: 10px;
-}
-
-.hzn-card-content {
-  margin-top: 20px;
-}
+.hzn-mat-options{  position: absolute;  top: 30vh;  left: 30vw; }
+::ng-deep .cdk-overlay-container{left: 30vw;}
+::ng-deep .cdk-overlay-pane { left:0 !important; transform:none !important;}
+::ng-deep .mat-select-panel{left: 0}

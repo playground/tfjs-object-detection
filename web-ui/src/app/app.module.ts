@@ -9,8 +9,14 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatCardModule } from '@angular/material/card';
 import { MatTableModule } from '@angular/material/table';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatSelectModule } from '@angular/material/select';
+import { MatSidenavModule } from '@angular/material/sidenav';
+import { MatToolbarModule } from '@angular/material/toolbar';
+import { MatListModule } from '@angular/material/list';
+import { MatInputModule } from '@angular/material/input';
 import { HttpClientModule } from '@angular/common/http';
 import { WebcamModule } from 'ngx-webcam';
+import { FlexLayoutModule } from '@angular/flex-layout';
 
 @NgModule({
   declarations: [
@@ -26,7 +32,13 @@ import { WebcamModule } from 'ngx-webcam';
     MatCardModule,
     MatTableModule,
     MatSnackBarModule,
+    MatSelectModule,
+    MatInputModule,
+    MatSidenavModule,
+    MatToolbarModule,
+    MatListModule,
     HttpClientModule,
+    FlexLayoutModule,
     WebcamModule
   ],
   providers: [],

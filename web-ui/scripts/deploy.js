@@ -20,11 +20,13 @@ let build = {
               html = html.replace('runtime.js', '/static/js/runtime.js');
               html = html.replace('polyfills.js', '/static/js/polyfills.js');
               html = html.replace('main.js', '/static/js/main.js');
+              html = html.replace('styles.css', '/static/js/styles.css');
               writeFileSync(`../saved-model-service/index.html`, html);
               copyFileSync(`dist/web-ui/favicon.ico`, `../saved-model-service/public/js/favicon.ico`);
               copyFileSync(`dist/web-ui/runtime.js`, `../saved-model-service/public/js/runtime.js`);
               copyFileSync(`dist/web-ui/polyfills.js`, `../saved-model-service/public/js/polyfills.js`);
               copyFileSync(`dist/web-ui/main.js`, `../saved-model-service/public/js/main.js`);
+              copyFileSync(`dist/web-ui/styles.css`, `../saved-model-service/public/js/styles.css`);
               console.log(`done deploying web-ui`);
               observer.next();
               observer.complete();

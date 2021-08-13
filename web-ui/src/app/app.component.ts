@@ -49,6 +49,8 @@ export class AppComponent implements OnInit, AfterViewInit {
   showWebcam = false;
   cameraHeight: number = 261;
   cameraWidth: number = 466;
+  scores: string[] = ['0.95', '0.90', '0.85', '0.80', '0.75', '0.70', '0.65', '0.60'];
+  cutoff: string;
 
   constructor(
     private http: HttpClient,
@@ -95,6 +97,7 @@ export class AppComponent implements OnInit, AfterViewInit {
       if(JSON.stringify(data) !== JSON.stringify(this.prevJson)) {
         console.log(data)
         this.prevJson = data;
+        this.cutoff = this.prevJson.confidentCutoff;
         this.drawImage();
       }
     });
@@ -112,7 +115,7 @@ export class AppComponent implements OnInit, AfterViewInit {
       let { naturalWidth: width, naturalHeight: height } = img;
       console.log('loaded', width, height)
       let aRatio = width/height;
-      this.cameraWidth = canvas.width = this.matCardWidth - 2;
+      this.cameraWidth = canvas.width = this.matCardWidth;
       this.cameraHeight = canvas.height = canvas.width / aRatio;
       this.ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
