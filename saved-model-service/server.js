@@ -27,6 +27,12 @@ module.exports = () => {
     res.send({status: true, message: `Camera ${process.env.npm_config_cameraOn ? 'On' : 'Off'}`});
   });
 
+  app.get("/score", (req, res) => {
+    console.log(req.query.score)
+    process.env.npm_config_score = req.query.score;
+    res.send({status: true, message: `Score: ${process.env.npm_config_score}`});
+  });
+
   app.post('/upload', function(req, res) {
     try {
       if (!req.files || Object.keys(req.files).length === 0) {

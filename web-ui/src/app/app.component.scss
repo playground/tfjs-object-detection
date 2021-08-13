@@ -11,7 +11,7 @@
   display: table-cell;
   width: 99%;
   margin-left: -28px;
-  margin-top: -28px;
+  margin-top: -12px;
 }
 
 .button_spacer {
@@ -138,7 +138,7 @@ a:hover {
 .hzn-form-field-select{
   width: 80px;
   height: 20px;
-  font-size: 12px;
+  font-size: 10px;
 }
 
 .hzn-label {
@@ -146,5 +146,9 @@ a:hover {
 }
 
 .hzn-card-content {
-  margin-top: 20px;
+  margin-top: 3px;
+}
+
+.hzn-mat-select {
+  height: 0.8vh !important;
 }

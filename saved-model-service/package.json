@@ -10,7 +10,7 @@
   "author": "ljeff@us.ibm.com",
   "license": "ISC",
   "dependencies": {
-    "@tensorflow/tfjs-node": "^3.8.0",
+    "@tensorflow/tfjs-node": "^3.3.0",
     "express": "^4.17.1",
     "express-fileupload": "^1.2.1",
     "find-process": "^1.4.4",

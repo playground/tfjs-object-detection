@@ -49,7 +49,7 @@ export class AppComponent implements OnInit, AfterViewInit {
   showWebcam = false;
   cameraHeight: number = 261;
   cameraWidth: number = 466;
-  scores: string[] = ['0.95', '0.90', '0.85', '0.80', '0.75', '0.70', '0.65', '0.60'];
+  scores: string[] = ['0.95', '0.90', '0.85', '0.80', '0.75', '0.70', '0.65', '0.60', '0.55', '0.50', '0.45', '0.40', '0.35', '0.30', '0.25', '0.20', '0.15', '0.10'];
   cutoff: string;
 
   constructor(
@@ -90,6 +90,15 @@ export class AppComponent implements OnInit, AfterViewInit {
       this.uploaded = '';
     }
   }
+  onScoreChange(evt: any) {
+    if(evt.isUserInput) {
+      console.log(evt)
+      this.http.get(`/score?score=${evt.source.value}`)
+      .subscribe((data) => {
+        console.log('json', data)
+      });
+    }
+  }
   loadJson(file: any) {
     this.http.get(file)
     .subscribe((data) => {
@@ -97,7 +106,7 @@ export class AppComponent implements OnInit, AfterViewInit {
       if(JSON.stringify(data) !== JSON.stringify(this.prevJson)) {
         console.log(data)
         this.prevJson = data;
-        this.cutoff = this.prevJson.confidentCutoff;
+        this.cutoff = ''+this.prevJson.confidentCutoff;
         this.drawImage();
       }
     });
@@ -238,7 +247,8 @@ export class AppComponent implements OnInit, AfterViewInit {
     this.http.post<any>('/upload', formData)
     .subscribe((res) => {
       console.log(res)
-      this.uploaded = " - Uploaded!";
+      this.showMessage(`${imageFile.name} uploaded successfully.`)
+      // this.uploaded = " - Uploaded!";
       this.resetTimer();
     }, (err) => {
       console.log(err);

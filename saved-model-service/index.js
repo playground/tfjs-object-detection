@@ -1,7 +1,7 @@
 let tfnode = require('@tensorflow/tfjs-node');
 const {unlinkSync, stat, renameSync, readdir, readdirSync, existsSync, readFileSync, copyFileSync, mkdirSync} = require('fs');
 const jsonfile = require('jsonfile');
-const { Observable } = require('rxjs');
+const { Observable, Subject } = require('rxjs');
 const cp = require('child_process'),
 exec = cp.exec;
 const player = require('play-sound')();
@@ -30,6 +30,9 @@ const intervalMS = 10000;
 let count = 0;
 let previousImage;
 let confidentCutoff = 0.85;
+let $string = new Subject().asObservable().subscribe((data) => {
+  confidentCutoff = data;
+});
 
 const state = {
   server: null,
@@ -108,6 +111,9 @@ let ieam = {
     
     let predictions = [];
     const elapsedTime = endTime - startTime;
+    if(process.env.npm_config_score) {
+      confidentCutoff = parseFloat(process.env.npm_config_score).toFixed(2);
+    }
     for (let i = 0; i < scores[0].length; i++) {
       if (scores[0][i] > confidentCutoff) {
         predictions.push({

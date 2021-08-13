@@ -57,12 +57,11 @@
         </form>
 
         <mat-card-subtitle style="margin-top:1px;">
-          {{selectedFile.name}}{{uploaded}}
-          <span  class="button_spacer">
+          <span>
             <mat-form-field appearance="outline" class="hzn-form-field-select">
             <mat-label class="hzn-label">Score</mat-label>
-            <mat-select [(value)]="cutoff">
-              <mat-option *ngFor="let score of scores" [value]="score">{{ score }}</mat-option>
+            <mat-select [(value)]="cutoff" class="hzn-mat-select">
+              <mat-option *ngFor="let score of scores" [value]="score" (onSelectionChange)="onScoreChange($event)">{{ score }}</mat-option>
             </mat-select>
           </mat-form-field>
           </span>
