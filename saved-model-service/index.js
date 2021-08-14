@@ -24,15 +24,20 @@ const oldModelPath = './model-old';
 const staticPath = './public/js';
 const mmsPath = '/mms-shared';
 const localPath = './local-shared';
+const oldImage = `${imagePath}/image-old.png`;
 let sharedPath = '';
 let timer;
 const intervalMS = 10000;
 let count = 0;
 let previousImage;
 let confidentCutoff = 0.85;
-let $string = new Subject().asObservable().subscribe((data) => {
-  confidentCutoff = data;
+const $score = new Subject().asObservable().subscribe((data) => {
+  confidentCutoff = parseFloat(data).toFixed(2);
+  console.log('subscribe: ', data)
+  ieam.renameFile(oldImage, `${imagePath}/image.png`);  
 });
+
+module.exports.$score = $score;
 
 const state = {
   server: null,
@@ -111,15 +116,13 @@ let ieam = {
     
     let predictions = [];
     const elapsedTime = endTime - startTime;
-    if(process.env.npm_config_score) {
-      confidentCutoff = parseFloat(process.env.npm_config_score).toFixed(2);
-    }
     for (let i = 0; i < scores[0].length; i++) {
-      if (scores[0][i] > confidentCutoff) {
+      let score = scores[0][i].toFixed(2);
+      if (score >= confidentCutoff) {
         predictions.push({
-          detectedBox: boxes[0][i].map((el)=>el.toFixed(3)),
+          detectedBox: boxes[0][i].map((el)=>el.toFixed(2)),
           detectedClass: labels[classes[0][i]],
-          detectedScore: scores[0][i].toFixed(3)
+          detectedScore: score
         });
       }
     }
@@ -333,7 +336,6 @@ let ieam = {
     if(!existsSync(oldModelPath)) {
       mkdirSync(oldModelPath);
     }
-    let oldImage = `${imagePath}/image-old.png`;
     if(!existsSync(oldImage)) {
       copyFileSync(`${imagePath}/backup.png`, oldImage)
     }

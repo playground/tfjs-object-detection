@@ -1,6 +1,7 @@
 const fileUpload = require('express-fileupload');
 const express = require("express");
 const path = require('path');
+const $score = require('./index').$score;
 
 module.exports = () => {
   const app = express();
@@ -28,9 +29,8 @@ module.exports = () => {
   });
 
   app.get("/score", (req, res) => {
-    console.log(req.query.score)
-    process.env.npm_config_score = req.query.score;
-    res.send({status: true, message: `Score: ${process.env.npm_config_score}`});
+    $score.next(req.query.score);
+    res.send({status: true, message: `Score: ${req.query.score}`});
   });
 
   app.post('/upload', function(req, res) {
