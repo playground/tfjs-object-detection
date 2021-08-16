@@ -76,9 +76,12 @@
       <webcam [height]="cameraHeight" [width]="cameraWidth" [trigger]="triggerObservable" (imageCapture)="handleImage($event)" *ngIf="showWebcam" [allowCameraSwitch]="allowCameraSwitch" [switchCamera]="nextWebcamObservable"
       (cameraSwitched)="cameraWasSwitched($event)"></webcam>
       <canvas #canvas *ngIf="showCanvas"></canvas>
-      <mat-card-subtitle style="margin-top:1px;">{{infoText}}</mat-card-subtitle>
+      <!-- <mat-card-subtitle style="margin-top:1px;">{{infoText}}</mat-card-subtitle> -->
+      <div>{{infoText}}</div>
+      <div>{{platform}}</div>
+      <div #hosturl></div>
 
-      <table mat-table [dataSource]="dataSource" class="mat-elevation-z8">
+      <table mat-table [dataSource]="dataSource" class="mat-elevation-z8 hzn-table">
 
         <!--- Note that these columns can be defined in any order.
               The actual rendered columns are set as a property on the row definition" -->

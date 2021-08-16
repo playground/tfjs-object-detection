@@ -5,7 +5,7 @@ RUN apt update -y && apt install fswebcam -y
 WORKDIR /server
 
 COPY . /server
-RUN npm install -g npm
+RUN npm install -g npm ngrok
 RUN npm install
 
 VOLUME /demo_model_mms_helper_shared_volume

@@ -11,11 +11,12 @@
       "detectedScore": "1.00"
     }
   ],
-  "elapsedTime": 7994.116389036179,
+  "elapsedTime": 8656.065581798553,
   "version": {
     "name": "Demo model",
     "version": "1.0.0"
   },
   "confidentCutoff": 0.85,
-  "url": ""
+  "url": "https://96ec827fb9f9.ngrok.io",
+  "platform": "darwin:x64"
 }

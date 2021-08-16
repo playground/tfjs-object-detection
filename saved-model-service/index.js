@@ -34,9 +34,16 @@ let previousImage;
 let confidentCutoff = 0.85;
 let ngrokUrl = '';
 const $score = new Subject().asObservable().subscribe((data) => {
-  confidentCutoff = parseFloat(data).toFixed(2);
-  console.log('subscribe: ', data)
-  ieam.renameFile(oldImage, `${imagePath}/image.png`);  
+  if(data.name == 'score') {
+    confidentCutoff = parseFloat(data).toFixed(2);
+    console.log('subscribe: ', data)  
+    ieam.renameFile(oldImage, `${imagePath}/image.png`);  
+  } else if(data.name == 'ngrok') {
+    ieam.getNgrokUrl(true)
+    .subscribe((data) => {
+      ieam.renameFile(oldImage, `${imagePath}/image.png`);  
+    })
+  }
 });
 
 module.exports.$score = $score;
@@ -58,27 +65,36 @@ mp3s = {
 };
 
 let ieam = {
-  getNgrokUrl: () => {
-    let url = 'http://127.0.0.1:4040/api/tunnels';
-    http.get(url, (res) => {
-      let data = '';
-      console.log("Got response: " + res.statusCode);
-
-      res.on("data", (chunk) => {
-        data += chunk;
-      });
-      res.on('error', (e) => {
-        console.log("Got error: " + e.message);
-      });  
-      res.on("end", () => {
-        let json = JSON.parse(data);
-        json.tunnels.forEach((tunnel) => {
-          if(tunnel.public_url.indexOf('https:') >= 0) {
-            ngrokUrl = tunnel.public_url;
-            console.log("url: ", ngrokUrl);
-          }
-        })
-      });
+  getNgrokUrl: (refresh = false) => {
+    return new Observable((observer) => {
+      if(refresh || ngrokUrl.length == 0) {
+        let url = 'http://127.0.0.1:4040/api/tunnels';
+        http.get(url, (res) => {
+          let data = '';
+          console.log("Got response: " + res.statusCode);
+    
+          res.on("data", (chunk) => {
+            data += chunk;
+          });
+          res.on('error', (e) => {
+            console.log("Got error: " + e.message);
+          });  
+          res.on("end", () => {
+            let json = JSON.parse(data);
+            json.tunnels.forEach((tunnel) => {
+              if(tunnel.public_url.indexOf('https:') >= 0) {
+                ngrokUrl = tunnel.public_url;
+                console.log("url: ", ngrokUrl);
+                observer.next(ngrokUrl);
+                observer.complete();
+              }
+            })
+          });
+        });    
+      } else {
+        observer.next(ngrokUrl);
+        observer.complete();
+      }
     });
   },
   soundEffect: (mp3) => {
@@ -153,15 +169,17 @@ let ieam = {
         });
       }
     }
-    if(ngrokUrl.length == 0) {
-      ieam.getNgrokUrl();
-    }
-    console.log('predictions:', predictions.length, predictions[0]);
-    console.log('time took: ', elapsedTime);
-    console.log('build json...');
-    jsonfile.writeFile(`${staticPath}/image.json`, {bbox: predictions, elapsedTime: elapsedTime, version: version, confidentCutoff: confidentCutoff, url: ngrokUrl}, {spaces: 2});
-    ieam.renameFile(imageFile, `${imagePath}/image-old.png`);
-    ieam.soundEffect(mp3s.theForce);  
+    ieam.getNgrokUrl()
+    .subscribe((url) => {
+      console.log('predictions:', predictions.length, predictions[0]);
+      console.log('time took: ', elapsedTime);
+      console.log('build json...');
+      jsonfile.writeFile(`${staticPath}/image.json`, 
+        {bbox: predictions, elapsedTime: elapsedTime, version: version, confidentCutoff: confidentCutoff, url: url, platform: `${process.platform}:${process.arch}`}, 
+        {spaces: 2});
+      ieam.renameFile(imageFile, `${imagePath}/image-old.png`);
+      ieam.soundEffect(mp3s.theForce);  
+    })
   },
   traverse: (dir, done) => {
     var results = [];

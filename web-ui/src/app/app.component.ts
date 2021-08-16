@@ -4,6 +4,7 @@ import { HttpClient } from '@angular/common/http';
 import { MatSnackBar, MatSnackBarHorizontalPosition, MatSnackBarVerticalPosition, MatSnackBarConfig } from '@angular/material/snack-bar';
 import {WebcamImage, WebcamInitError, WebcamUtil} from 'ngx-webcam';
 import {Subject, Observable} from 'rxjs';
+import { ThisReceiver } from '@angular/compiler';
 
 export interface BboxElement {
   label: string;
@@ -25,6 +26,8 @@ export class AppComponent implements OnInit, AfterViewInit {
   camera: ElementRef;
   @ViewChild('front_camera', {static: false, read: ElementRef})
   frontCamera: ElementRef;
+  @ViewChild('hosturl', {static: false, read: ElementRef})
+  hostUrl: ElementRef;
 
   columns: string[] = ['label', 'score', 'min', 'max'];
   dataSource: any[] = [];
@@ -51,6 +54,7 @@ export class AppComponent implements OnInit, AfterViewInit {
   cameraWidth: number = 466;
   scores: string[] = ['0.95', '0.90', '0.85', '0.80', '0.75', '0.70', '0.65', '0.60', '0.55', '0.50', '0.45', '0.40', '0.35', '0.30', '0.25', '0.20', '0.15', '0.10'];
   cutoff: string;
+  platform: string;
 
   constructor(
     private http: HttpClient,
@@ -107,9 +111,17 @@ export class AppComponent implements OnInit, AfterViewInit {
         console.log(data)
         this.prevJson = data;
         this.cutoff = ''+this.prevJson.confidentCutoff;
+        this.platform = `Platform: ${this.prevJson.platform}`;
+        this.hostUrl.nativeElement.innerHTML = `Url: <a href="${this.prevJson.url}">${this.prevJson.url}</a>`;
         this.drawImage();
       }
     });
+  }
+  refreshNgrok() {
+    this.http.get('/ngrok')
+    .subscribe((data:any) => {
+      this.showMessage(data['message']);
+    })
   }
   drawImage() {
     let objDetected:any = {};

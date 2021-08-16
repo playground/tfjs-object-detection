@@ -29,8 +29,13 @@ module.exports = () => {
   });
 
   app.get("/score", (req, res) => {
-    $score.next(req.query.score);
+    $score.next({name: 'score', score: req.query.score});
     res.send({status: true, message: `Score: ${req.query.score}`});
+  });
+
+  app.get("/ngrok", (req, res) => {
+    $score.next({name: 'ngrok', refresh: true});
+    res.send({status: true, message: `refresh: ngrok`});
   });
 
   app.post('/upload', function(req, res) {
