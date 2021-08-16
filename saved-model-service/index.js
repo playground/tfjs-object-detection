@@ -2,6 +2,8 @@ let tfnode = require('@tensorflow/tfjs-node');
 const {unlinkSync, stat, renameSync, readdir, readdirSync, existsSync, readFileSync, copyFileSync, mkdirSync} = require('fs');
 const jsonfile = require('jsonfile');
 const { Observable, Subject } = require('rxjs');
+const https = require('https');
+const http = require('http');
 const cp = require('child_process'),
 exec = cp.exec;
 const player = require('play-sound')();
@@ -32,9 +34,11 @@ let count = 0;
 let previousImage;
 let confidentCutoff = 0.85;
 const $score = new Subject().asObservable().subscribe((data) => {
-  confidentCutoff = parseFloat(data).toFixed(2);
-  console.log('subscribe: ', data)
-  ieam.renameFile(oldImage, `${imagePath}/image.png`);  
+  if(data.name == 'score') {
+    confidentCutoff = parseFloat(data.score).toFixed(2);
+    console.log('subscribe: ', data)  
+    ieam.renameFile(oldImage, `${imagePath}/image.png`);  
+  }
 });
 
 module.exports.$score = $score;
@@ -343,8 +347,16 @@ let ieam = {
   },
   start: () => {
     count = 0;
-    state.server = require('./server')().listen(3000, () => {
-      console.log('Started on 3000');
+    const credentials = {
+      privateKey: readFileSync('certs/private.key', 'utf8'),
+      certificate: readFileSync('certs/certificate.crt', 'utf8')
+    }
+    let app = require('./server')();
+    https.Server(credentials, app).listen(443, () => {
+      console.log('Started on 443');
+    });
+    state.server = app.listen(80, () => {
+      console.log('Started on 80');
     });
     state.server.on('connection', (socket) => {
       // console.log('Add socket', state.sockets.length + 1);

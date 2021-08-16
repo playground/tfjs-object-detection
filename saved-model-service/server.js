@@ -29,7 +29,7 @@ module.exports = () => {
   });
 
   app.get("/score", (req, res) => {
-    $score.next(req.query.score);
+    $score.next({name: 'score', score: req.query.score});
     res.send({status: true, message: `Score: ${req.query.score}`});
   });
 
