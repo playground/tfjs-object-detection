@@ -2,6 +2,7 @@ let tfnode = require('@tensorflow/tfjs-node');
 const {unlinkSync, stat, renameSync, readdir, readdirSync, existsSync, readFileSync, copyFileSync, mkdirSync} = require('fs');
 const jsonfile = require('jsonfile');
 const { Observable, Subject } = require('rxjs');
+const http = require('http');
 const cp = require('child_process'),
 exec = cp.exec;
 const player = require('play-sound')();
@@ -31,6 +32,7 @@ const intervalMS = 10000;
 let count = 0;
 let previousImage;
 let confidentCutoff = 0.85;
+let ngrokUrl = '';
 const $score = new Subject().asObservable().subscribe((data) => {
   confidentCutoff = parseFloat(data).toFixed(2);
   console.log('subscribe: ', data)
@@ -39,13 +41,15 @@ const $score = new Subject().asObservable().subscribe((data) => {
 
 module.exports.$score = $score;
 
+const port = 3000;
+
 const state = {
   server: null,
   sockets: [],
 };
 process.env.npm_config_cameraOn = false;
 
-console.log('platform ', process.platform)
+console.log('platform ', process.platform, process.arch)
 
 mp3s = {
   'snapshot': './public/media/audio-snap.mp3',
@@ -54,6 +58,29 @@ mp3s = {
 };
 
 let ieam = {
+  getNgrokUrl: () => {
+    let url = 'http://127.0.0.1:4040/api/tunnels';
+    http.get(url, (res) => {
+      let data = '';
+      console.log("Got response: " + res.statusCode);
+
+      res.on("data", (chunk) => {
+        data += chunk;
+      });
+      res.on('error', (e) => {
+        console.log("Got error: " + e.message);
+      });  
+      res.on("end", () => {
+        let json = JSON.parse(data);
+        json.tunnels.forEach((tunnel) => {
+          if(tunnel.public_url.indexOf('https:') >= 0) {
+            ngrokUrl = tunnel.public_url;
+            console.log("url: ", ngrokUrl);
+          }
+        })
+      });
+    });
+  },
   soundEffect: (mp3) => {
     console.log(mp3)
     player.play(mp3, (err) => {
@@ -126,10 +153,13 @@ let ieam = {
         });
       }
     }
+    if(ngrokUrl.length == 0) {
+      ieam.getNgrokUrl();
+    }
     console.log('predictions:', predictions.length, predictions[0]);
     console.log('time took: ', elapsedTime);
     console.log('build json...');
-    jsonfile.writeFile(`${staticPath}/image.json`, {bbox: predictions, elapsedTime: elapsedTime, version: version, confidentCutoff: confidentCutoff}, {spaces: 2});
+    jsonfile.writeFile(`${staticPath}/image.json`, {bbox: predictions, elapsedTime: elapsedTime, version: version, confidentCutoff: confidentCutoff, url: ngrokUrl}, {spaces: 2});
     ieam.renameFile(imageFile, `${imagePath}/image-old.png`);
     ieam.soundEffect(mp3s.theForce);  
   },
@@ -343,8 +373,8 @@ let ieam = {
   },
   start: () => {
     count = 0;
-    state.server = require('./server')().listen(3000, () => {
-      console.log('Started on 3000');
+    state.server = require('./server')().listen(port, () => {
+      console.log(`Started on ${port}`);
     });
     state.server.on('connection', (socket) => {
       // console.log('Add socket', state.sockets.length + 1);
