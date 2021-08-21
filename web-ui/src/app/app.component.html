@@ -75,8 +75,13 @@
 
       <webcam [height]="cameraHeight" [width]="cameraWidth" [trigger]="triggerObservable" (imageCapture)="handleImage($event)" *ngIf="showWebcam" [allowCameraSwitch]="allowCameraSwitch" [switchCamera]="nextWebcamObservable"
       (cameraSwitched)="cameraWasSwitched($event)"></webcam>
-      <canvas #canvas *ngIf="showCanvas"></canvas>
+
+      <div *ngFor="let image of images">
+
+      </div>
       <mat-card-subtitle style="margin-top:1px;">{{infoText}}</mat-card-subtitle>
+
+      <canvas #canvas *ngIf="showCanvas"></canvas>
 
       <table mat-table [dataSource]="dataSource" class="mat-elevation-z8">
 

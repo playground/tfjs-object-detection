@@ -163,17 +163,14 @@ let ieam = {
       .subscribe({
         next: (value) => {
           console.log(value);
+          let json = Object.assign({}, {images: value, version: version, confidentCutoff: confidentCutoff});
+          jsonfile.writeFile(`${staticPath}/video.json`, json, {spaces: 2});
+          ieam.soundEffect(mp3s.theForce);  
         },
         complete: () => {
           console.log('complete');
         }
       });
-      // console.log(Object.keys(bbox).length, bbox)
-      // if(Object.keys(bbox).length > 0) {
-      //   let json = Object.assign(bbox, {version: version, confidentCutoff: confidentCutoff});
-      //   jsonfile.writeFile(`${staticPath}/video.json`, {json}, {spaces: 2});
-      //   ieam.soundEffect(mp3s.theForce);  
-      // }
     } catch(e) {
       console.log(e);
     }
@@ -265,7 +262,11 @@ let ieam = {
       config = list.filter(item => item === 'config.json');
       list = list.filter(item => /(\.zip)$/.test(item));
       sharedPath = localPath;
-      ieam.extractVideo(`${videoPath}/video.mp4`)
+      let video = `${videoPath}/video.mp4`;
+      if(!existsSync(video)) {
+        video = `${videoPath}/video.avi`;
+      }
+      ieam.extractVideo(video)
       .subscribe((files) => {
         if(files.length > 0) {
           let images = files.filter((f) => f.indexOf('.jpg') > 0);
