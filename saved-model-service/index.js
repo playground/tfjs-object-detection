@@ -2,6 +2,7 @@ let tfnode = require('@tensorflow/tfjs-node');
 const {unlinkSync, stat, renameSync, readdir, readdirSync, existsSync, readFileSync, copyFileSync, mkdirSync} = require('fs');
 const jsonfile = require('jsonfile');
 const { Observable, Subject } = require('rxjs');
+const ffmpeg = require('ffmpeg');
 const https = require('https');
 const http = require('http');
 const cp = require('child_process'),
@@ -26,6 +27,7 @@ const oldModelPath = './model-old';
 const staticPath = './public/js';
 const mmsPath = '/mms-shared';
 const localPath = './local-shared';
+const videoPath = './public/video';
 const oldImage = `${imagePath}/image-old.png`;
 let sharedPath = '';
 let timer;
@@ -97,15 +99,18 @@ let ieam = {
         const image = readFileSync(imageFile);
         const decodedImage = tfnode.node.decodeImage(new Uint8Array(image), 3);
         const inputTensor = decodedImage.expandDims(0);
-        await ieam.inference(inputTensor, imageFile);
-        ieam.doCapture = true;
+        let json = await ieam.inference(inputTensor);
+        jsonfile.writeFile(`${staticPath}/image.json`, json, {spaces: 2});
+        ieam.renameFile(imageFile, `${imagePath}/image-old.png`);
+        ieam.soundEffect(mp3s.theForce);  
+            ieam.doCapture = true;
       } catch(e) {
         console.log(e);
         unlinkSync(imageFile);
       }
     }  
   },  
-  inference: async (inputTensor, imageFile) => {
+  inference: async (inputTensor) => {
     const startTime = tfnode.util.now();
     let outputTensor = await model.predict({input_tensor: inputTensor});
     const scores = await outputTensor['detection_scores'].arraySync();
@@ -133,9 +138,10 @@ let ieam = {
     console.log('predictions:', predictions.length, predictions[0]);
     console.log('time took: ', elapsedTime);
     console.log('build json...');
-    jsonfile.writeFile(`${staticPath}/image.json`, {bbox: predictions, elapsedTime: elapsedTime, version: version, confidentCutoff: confidentCutoff}, {spaces: 2});
-    ieam.renameFile(imageFile, `${imagePath}/image-old.png`);
-    ieam.soundEffect(mp3s.theForce);  
+    return {bbox: predictions, elapsedTime: elapsedTime, version: version, confidentCutoff: confidentCutoff};
+  },
+  inferenceVideo: () => {
+
   },
   traverse: (dir, done) => {
     var results = [];
@@ -160,16 +166,78 @@ let ieam = {
       })();
     });
   },
+  readConfig: (configs) => {
+    configs.forEach((config) => {
+      let json = jsonfilereadFileSync(`${sharedPath}/${config}`);
+      if(json && json.modelPath) {
+        
+      }
+    })
+  },
+  extractVideo: (file) => {
+    return new Observable((observer) => {
+      try {
+        if(existsSync(file)) {
+          console.log(file)
+          let process = new ffmpeg(file);
+          process.then((video) => {
+            video.fnExtractFrameToJPG(videoPath, {
+              every_n_frames: 150,
+              number: 5,
+              keep_pixel_aspect_ratio : true,
+              keep_aspect_ratio: true,
+              file_name : `image.jpg`
+            }, (err, files) => {
+              if(!err) {
+                console.log('video file: ', files);
+                observer.next(files);
+                observer.complete();        
+              } else {
+                console.log('video err: ', err);
+                observer.next();
+                observer.complete();    
+              }
+            })  
+          }, (err) => {
+            console.log('err: ', err);
+            observer.next([]);
+            observer.complete();
+          })
+        } else {
+          observer.next([]);
+          observer.complete();    
+        }
+      } catch(e) {
+        console.log('error: ', e.msg);
+        observer.next([]);
+        observer.complete();
+      }
+    });
+  },
+  observerReturn: (observer, data) => {
+    observer.next(data);
+    observer.complete();    
+  },
   checkMMS: () => {
     let list;
+    let config;
     if(existsSync(mmsPath)) {
       list = readdirSync(mmsPath);
       list = list.filter(item => /(\.zip)$/.test(item));
       sharedPath = mmsPath;  
     } else if(existsSync(localPath)) {
       list = readdirSync(localPath);
+      config = list.filter(item => item === 'config.json');
       list = list.filter(item => /(\.zip)$/.test(item));
       sharedPath = localPath;
+      ieam.extractVideo(`${videoPath}/video.mp4`)
+      .subscribe((files) => {
+        if(files.length > 0) {
+          let images = files.filter((f) => f.indexOf('.jpg') > 0);
+          let video = files.filter((f) => f.indexOf('.jpg') < 0);
+          unlinkSync(video[0]);  
+        }
+      })
     }
     return list;
   },
@@ -347,17 +415,25 @@ let ieam = {
   },
   start: () => {
     count = 0;
-    const credentials = {
-      privateKey: readFileSync('certs/private.key', 'utf8'),
-      certificate: readFileSync('certs/certificate.crt', 'utf8')
-    }
     let app = require('./server')();
-    https.Server(credentials, app).listen(443, () => {
-      console.log('Started on 443');
-    });
-    state.server = app.listen(80, () => {
-      console.log('Started on 80');
-    });
+    if(existsSync('certs/private.key') && existsSync('certs/certificate.crt') && existsSync('certs/carootcert.der') && existsSync('certs/caintermediatecert.der')) {
+      const credentials = {
+        passphrase: 'ieam',
+        key: readFileSync('certs/private.key', 'ascii'),
+        cert: readFileSync('certs/certificate.crt', 'ascii'),
+        ca: [readFileSync('certs/carootcert.der', 'ascii'), readFileSync('certs/caintermediatecert.der', 'ascii')]
+      }
+      https.Server(credentials, app).listen(443, () => {
+        console.log('Started on 443');
+      });
+      state.server = app.listen(80, () => {
+        console.log('Started on 80');
+      });
+    } else {
+      state.server = app.listen(3000, () => {
+        console.log('Started on 3000');
+      });
+    }
     state.server.on('connection', (socket) => {
       // console.log('Add socket', state.sockets.length + 1);
       state.sockets.push(socket);

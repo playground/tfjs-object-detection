@@ -13,6 +13,7 @@
     "@tensorflow/tfjs-node": "^3.3.0",
     "express": "^4.17.1",
     "express-fileupload": "^1.2.1",
+    "ffmpeg": "^0.0.4",
     "find-process": "^1.4.4",
     "jsonfile": "^6.1.0",
     "multer": "^1.4.2",
