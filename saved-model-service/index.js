@@ -100,6 +100,7 @@ let ieam = {
         const decodedImage = tfnode.node.decodeImage(new Uint8Array(image), 3);
         const inputTensor = decodedImage.expandDims(0);
         let json = await ieam.inference(inputTensor);
+        json = Object.assign(json, {version: version, confidentCutoff: confidentCutoff});
         jsonfile.writeFile(`${staticPath}/image.json`, json, {spaces: 2});
         ieam.renameFile(imageFile, `${imagePath}/image-old.png`);
         ieam.soundEffect(mp3s.theForce);  
@@ -138,10 +139,27 @@ let ieam = {
     console.log('predictions:', predictions.length, predictions[0]);
     console.log('time took: ', elapsedTime);
     console.log('build json...');
-    return {bbox: predictions, elapsedTime: elapsedTime, version: version, confidentCutoff: confidentCutoff};
+    return {bbox: predictions, elapsedTime: elapsedTime};
   },
-  inferenceVideo: () => {
-
+  inferenceVideo: (files) => {
+    let bbox = [];
+    files.forEach(async (imageFile) => {
+      try {
+        console.log(imageFile)
+        const image = readFileSync(imageFile);
+        const decodedImage = tfnode.node.decodeImage(new Uint8Array(image), 3);
+        const inputTensor = decodedImage.expandDims(0);
+        let json = await ieam.inference(inputTensor);
+        bbox.push(json);
+      } catch(e) {
+        console.log(e);
+        unlinkSync(imageFile);
+      }
+    })
+    if(bbox.length > 0) {
+      jsonfile.writeFile(`${staticPath}/video.json`, {json}, {spaces: 2});
+      ieam.soundEffect(mp3s.theForce);  
+    }
   },
   traverse: (dir, done) => {
     var results = [];
