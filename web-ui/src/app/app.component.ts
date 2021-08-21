@@ -51,11 +51,14 @@ export class AppComponent implements OnInit, AfterViewInit {
   cameraWidth: number = 466;
   scores: string[] = ['0.95', '0.90', '0.85', '0.80', '0.75', '0.70', '0.65', '0.60', '0.55', '0.50', '0.45', '0.40', '0.35', '0.30', '0.25', '0.20', '0.15', '0.10'];
   cutoff: string;
-  images: any[];
+  assetTypes: string[] = ['Image', 'Video'];
+  assetType = 'Image';
+  images: any[] = [];
 
   constructor(
     private http: HttpClient,
-    private snackBar: MatSnackBar
+    private snackBar: MatSnackBar,
+    private elementRef: ElementRef
   ){}
   ngOnInit(): void {
     // WebcamUtil.getAvailableVideoInputs()
@@ -65,13 +68,13 @@ export class AppComponent implements OnInit, AfterViewInit {
   }
   ngAfterViewInit(): void {
     this.getMatCardSize();
-    this.ctx = this.canvas.nativeElement.getContext('2d');
+    // this.ctx = this.canvas.nativeElement.getContext('2d');
     this.setInterval(this.intervalMS);
   }
   @HostListener('window:resize', ['$event'])
   onResize(event?:any) {
     this.getMatCardSize();
-    this.drawImage();
+    this.drawComponent();
   }
   getMatCardSize() {
     this.matCardHeight = this.matCard.nativeElement.offsetHeight;
@@ -100,6 +103,14 @@ export class AppComponent implements OnInit, AfterViewInit {
       });
     }
   }
+  onAssetTypeChange(evt: any) {
+    if(evt.isUserInput) {
+      console.log(evt)
+      this.assetType = evt.source.value;
+      this.loadJson(`/static/js/${this.assetType.toLowerCase()}.json`);
+      this.resetTimer();
+    }
+  }
   loadJson(file: any) {
     this.http.get(file)
     .subscribe((data) => {
@@ -108,11 +119,74 @@ export class AppComponent implements OnInit, AfterViewInit {
         console.log(data)
         this.prevJson = data;
         this.cutoff = ''+this.prevJson.confidentCutoff;
-        this.drawImage();
+        this.drawComponent();
       }
     });
   }
-  drawImage() {
+  drawComponent() {
+    let keys = Object.keys(this.prevJson.images);
+    this.images = [];
+    keys.forEach((key) => {
+      this.images.push({name: key, class: key.replace(/\/|\./g, '-')});
+    })
+    setTimeout(() => this.preDraw(), 2000);
+  }
+  preDraw() {
+    this.images.forEach((image) => this.drawImage(image));
+  }
+  drawImage(image: any) {
+    let objDetected:any = {};
+    let el = <HTMLCanvasElement> document.querySelector(`.${image.class}`);
+    let ctx = el.getContext('2d');
+    let canvas = ctx.canvas;
+    let img = new Image();
+    let vobj = this.prevJson.version || undefined;
+    let version = vobj ? `Model: ${vobj.name} v${vobj.version}` : 'version missing';
+    let currentImage = this.prevJson.images[image.name];
+    version += ` | Inference time: ${parseFloat(currentImage.elapsedTime).toFixed(2)}`;
+    this.infoText = version;
+
+    img.addEventListener('load', () => {
+      let { naturalWidth: width, naturalHeight: height } = img;
+      console.log('loaded', width, height)
+      let aRatio = width/height;
+      this.cameraWidth = canvas.width = this.matCardWidth;
+      this.cameraHeight = canvas.height = canvas.width / aRatio;
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+      height = canvas.height;
+      width = canvas.width;
+      aRatio = width/height;
+      let dataSource = [];
+      currentImage.bbox.forEach((box: any) => {
+        let bbox = box.detectedBox;
+        if(objDetected[box.detectedClass]) {
+          objDetected[box.detectedClass]++;
+        } else {
+          objDetected[box.detectedClass] = 1;
+        }
+        dataSource.push({
+          label: box.detectedClass,
+          score: parseFloat(box.detectedScore).toFixed(2),
+          min: `(${(bbox[0]/aRatio).toFixed(2)},${(bbox[1]/aRatio).toFixed(2)})`,
+          max: `(${(bbox[2]/aRatio).toFixed(2)},${(bbox[3]/aRatio).toFixed(2)})`
+        })
+
+        ctx.fillStyle = 'rgba(255,255,255,0.2)';
+        ctx.strokeStyle = 'yellow';
+        ctx.fillRect(bbox[1] * (width / aRatio), bbox[0] * (height / aRatio), width / aRatio * (bbox[3] - bbox[1]),
+        height / aRatio * (bbox[2] - bbox[0]));
+        ctx.font = '20px Arial';
+        ctx.fillStyle = 'black';
+        ctx.fillText(`${box.detectedClass}: ${box.detectedScore}`, +parseFloat((bbox[1] * width).toString()).toFixed(2), +parseFloat((bbox[0] * height).toString()).toFixed(2), +parseFloat((bbox[0] * height).toString()).toFixed(2));
+        ctx.lineWidth = 2;
+        ctx.strokeRect(+parseFloat((bbox[1] * width).toString()).toFixed(2), +parseFloat((bbox[0] * height).toString()).toFixed(2), +parseFloat((width * (bbox[3] - bbox[1])).toString()).toFixed(2), +parseFloat((height * (bbox[2] - bbox[0])).toString()).toFixed(2));
+      })
+    });
+    img.src = `${image.name}?${new Date().getTime()}`;
+
+  }
+  drawImage2() {
     let objDetected:any = {};
     let vobj = this.prevJson.version || undefined;
     let version = vobj ? `Model: ${vobj.name} v${vobj.version}` : 'version missing';
@@ -259,7 +333,7 @@ export class AppComponent implements OnInit, AfterViewInit {
   }
   setInterval(ms: number) {
     this.timer = setInterval(async () => {
-      this.loadJson('/static/js/image.json');
+      this.loadJson(`/static/js/${this.assetType}.json`);
     }, ms);
   }
   resetTimer() {

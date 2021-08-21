@@ -1,20 +1,24 @@
 {
-  "bbox": [
-    {
-      "detectedBox": [
-        "0.03",
-        "0.33",
-        "0.21",
-        "0.54"
+  "images": {
+    "/static/images/image-old.png": {
+      "bbox": [
+        {
+          "detectedBox": [
+            "0.03",
+            "0.33",
+            "0.21",
+            "0.54"
+          ],
+          "detectedClass": "hard-hat",
+          "detectedScore": "1.00"
+        }
       ],
-      "detectedClass": "hard-hat",
-      "detectedScore": "1.00"
+      "elapsedTime": 208.68720889091492
     }
-  ],
-  "elapsedTime": 7573.011331796646,
+  },
   "version": {
     "name": "Demo model",
     "version": "1.0.0"
   },
-  "confidentCutoff": 0.85
+  "confidentCutoff": "0.85"
 }

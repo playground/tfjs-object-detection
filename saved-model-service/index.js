@@ -101,7 +101,9 @@ let ieam = {
         const inputTensor = decodedImage.expandDims(0);
         ieam.inference(inputTensor)
         .subscribe((json) => {
-          json = Object.assign(json, {version: version, confidentCutoff: confidentCutoff});
+          let images = {};
+          images['/static/images/image-old.png'] = json;
+          json = Object.assign({images: images, version: version, confidentCutoff: confidentCutoff});
           jsonfile.writeFile(`${staticPath}/image.json`, json, {spaces: 2});
           ieam.renameFile(imageFile, `${imagePath}/image-old.png`);
           ieam.soundEffect(mp3s.theForce);  
@@ -149,7 +151,6 @@ let ieam = {
   inferenceVideo: (files) => {
     try {
       let $inference = {};
-      let bbox = {};
       files.forEach(async (imageFile) => {
         if(existsSync(imageFile)) {
           console.log(imageFile)
