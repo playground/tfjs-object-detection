@@ -1,7 +1,7 @@
 let tfnode = require('@tensorflow/tfjs-node');
 const {unlinkSync, stat, renameSync, readdir, readdirSync, existsSync, readFileSync, copyFileSync, mkdirSync} = require('fs');
 const jsonfile = require('jsonfile');
-const { Observable, Subject } = require('rxjs');
+const { Observable, Subject, forkJoin } = require('rxjs');
 const ffmpeg = require('ffmpeg');
 const https = require('https');
 const http = require('http');
@@ -99,68 +99,85 @@ let ieam = {
         const image = readFileSync(imageFile);
         const decodedImage = tfnode.node.decodeImage(new Uint8Array(image), 3);
         const inputTensor = decodedImage.expandDims(0);
-        let json = await ieam.inference(inputTensor);
-        json = Object.assign(json, {version: version, confidentCutoff: confidentCutoff});
-        jsonfile.writeFile(`${staticPath}/image.json`, json, {spaces: 2});
-        ieam.renameFile(imageFile, `${imagePath}/image-old.png`);
-        ieam.soundEffect(mp3s.theForce);  
-            ieam.doCapture = true;
+        ieam.inference(inputTensor)
+        .subscribe((json) => {
+          json = Object.assign(json, {version: version, confidentCutoff: confidentCutoff});
+          jsonfile.writeFile(`${staticPath}/image.json`, json, {spaces: 2});
+          ieam.renameFile(imageFile, `${imagePath}/image-old.png`);
+          ieam.soundEffect(mp3s.theForce);  
+          ieam.doCapture = true;  
+        });
       } catch(e) {
         console.log(e);
         unlinkSync(imageFile);
       }
     }  
   },  
-  inference: async (inputTensor) => {
-    const startTime = tfnode.util.now();
-    let outputTensor = await model.predict({input_tensor: inputTensor});
-    const scores = await outputTensor['detection_scores'].arraySync();
-    const boxes = await outputTensor['detection_boxes'].arraySync();
-    const classes = await outputTensor['detection_classes'].arraySync();
-    const num = await outputTensor['num_detections'].arraySync();
-    const endTime = tfnode.util.now();
-    outputTensor['detection_scores'].dispose();
-    outputTensor['detection_boxes'].dispose();
-    outputTensor['detection_classes'].dispose();
-    outputTensor['num_detections'].dispose();
-    
-    let predictions = [];
-    const elapsedTime = endTime - startTime;
-    for (let i = 0; i < scores[0].length; i++) {
-      let score = scores[0][i].toFixed(2);
-      if (score >= confidentCutoff) {
-        predictions.push({
-          detectedBox: boxes[0][i].map((el)=>el.toFixed(2)),
-          detectedClass: labels[classes[0][i]],
-          detectedScore: score
-        });
+  inference: (inputTensor) => {
+    return new Observable((observer) => {
+      const startTime = tfnode.util.now();
+      let outputTensor = model.predict({input_tensor: inputTensor});
+      const scores = outputTensor['detection_scores'].arraySync();
+      const boxes = outputTensor['detection_boxes'].arraySync();
+      const classes = outputTensor['detection_classes'].arraySync();
+      const num = outputTensor['num_detections'].arraySync();
+      const endTime = tfnode.util.now();
+      outputTensor['detection_scores'].dispose();
+      outputTensor['detection_boxes'].dispose();
+      outputTensor['detection_classes'].dispose();
+      outputTensor['num_detections'].dispose();
+      
+      let predictions = [];
+      const elapsedTime = endTime - startTime;
+      for (let i = 0; i < scores[0].length; i++) {
+        let score = scores[0][i].toFixed(2);
+        if (score >= confidentCutoff) {
+          predictions.push({
+            detectedBox: boxes[0][i].map((el)=>el.toFixed(2)),
+            detectedClass: labels[classes[0][i]],
+            detectedScore: score
+          });
+        }
       }
-    }
-    console.log('predictions:', predictions.length, predictions[0]);
-    console.log('time took: ', elapsedTime);
-    console.log('build json...');
-    return {bbox: predictions, elapsedTime: elapsedTime};
+      console.log('predictions:', predictions.length, predictions[0]);
+      console.log('time took: ', elapsedTime);
+      console.log('build json...');
+      observer.next({bbox: predictions, elapsedTime: elapsedTime});
+      observer.complete();  
+    });
   },
   inferenceVideo: (files) => {
-    let bbox = [];
-    files.forEach(async (imageFile) => {
-      try {
-        console.log(imageFile)
-        const image = readFileSync(imageFile);
-        const decodedImage = tfnode.node.decodeImage(new Uint8Array(image), 3);
-        const inputTensor = decodedImage.expandDims(0);
-        let json = await ieam.inference(inputTensor);
-        bbox.push(json);
-      } catch(e) {
-        console.log(e);
-        unlinkSync(imageFile);
-      }
-    })
-    if(bbox.length > 0) {
-      jsonfile.writeFile(`${staticPath}/video.json`, {json}, {spaces: 2});
-      ieam.soundEffect(mp3s.theForce);  
+    try {
+      let $inference = {};
+      let bbox = {};
+      files.forEach(async (imageFile) => {
+        if(existsSync(imageFile)) {
+          console.log(imageFile)
+          const image = readFileSync(imageFile);
+          const decodedImage = tfnode.node.decodeImage(new Uint8Array(image), 3);
+          const inputTensor = decodedImage.expandDims(0);
+          $inference[imageFile.replace('./public/', '/static/')] = (ieam.inference(inputTensor));
+        }
+      })
+      forkJoin($inference)
+      .subscribe({
+        next: (value) => {
+          console.log(value);
+        },
+        complete: () => {
+          console.log('complete');
+        }
+      });
+      // console.log(Object.keys(bbox).length, bbox)
+      // if(Object.keys(bbox).length > 0) {
+      //   let json = Object.assign(bbox, {version: version, confidentCutoff: confidentCutoff});
+      //   jsonfile.writeFile(`${staticPath}/video.json`, {json}, {spaces: 2});
+      //   ieam.soundEffect(mp3s.theForce);  
+      // }
+    } catch(e) {
+      console.log(e);
     }
-  },
+},
   traverse: (dir, done) => {
     var results = [];
     readdir(dir, (err, list) => {
@@ -253,7 +270,8 @@ let ieam = {
         if(files.length > 0) {
           let images = files.filter((f) => f.indexOf('.jpg') > 0);
           let video = files.filter((f) => f.indexOf('.jpg') < 0);
-          unlinkSync(video[0]);  
+          unlinkSync(video[0]);
+          ieam.inferenceVideo(images);  
         }
       })
     }
