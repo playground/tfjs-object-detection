@@ -37,7 +37,6 @@ export class AppComponent implements OnInit, AfterViewInit {
   uploaded = '';
   matCardHeight: number;
   matCardWidth: number;
-  infoText: string;
   horizontalPosition: MatSnackBarHorizontalPosition = 'center';
   verticalPosition: MatSnackBarVerticalPosition = 'bottom';
   webcamImage: WebcamImage = null;
@@ -97,7 +96,7 @@ export class AppComponent implements OnInit, AfterViewInit {
   onScoreChange(evt: any) {
     if(evt.isUserInput) {
       console.log(evt)
-      this.http.get(`/score?score=${evt.source.value}`)
+      this.http.get(`/score?score=${evt.source.value}&assetType=${this.assetType}`)
       .subscribe((data) => {
         console.log('json', data)
       });
@@ -144,7 +143,7 @@ export class AppComponent implements OnInit, AfterViewInit {
     let version = vobj ? `Model: ${vobj.name} v${vobj.version}` : 'version missing';
     let currentImage = this.prevJson.images[image.name];
     version += ` | Inference time: ${parseFloat(currentImage.elapsedTime).toFixed(2)}`;
-    this.infoText = version;
+    image.infoText = version;
 
     img.addEventListener('load', () => {
       let { naturalWidth: width, naturalHeight: height } = img;
@@ -157,7 +156,7 @@ export class AppComponent implements OnInit, AfterViewInit {
       height = canvas.height;
       width = canvas.width;
       aRatio = width/height;
-      let dataSource = [];
+      let dataSource: any[] = [];
       currentImage.bbox.forEach((box: any) => {
         let bbox = box.detectedBox;
         if(objDetected[box.detectedClass]) {
@@ -182,57 +181,10 @@ export class AppComponent implements OnInit, AfterViewInit {
         ctx.lineWidth = 2;
         ctx.strokeRect(+parseFloat((bbox[1] * width).toString()).toFixed(2), +parseFloat((bbox[0] * height).toString()).toFixed(2), +parseFloat((width * (bbox[3] - bbox[1])).toString()).toFixed(2), +parseFloat((height * (bbox[2] - bbox[0])).toString()).toFixed(2));
       })
+      image.dataSource = dataSource;
     });
     img.src = `${image.name}?${new Date().getTime()}`;
 
-  }
-  drawImage2() {
-    let objDetected:any = {};
-    let vobj = this.prevJson.version || undefined;
-    let version = vobj ? `Model: ${vobj.name} v${vobj.version}` : 'version missing';
-    version += ` | Inference time: ${parseFloat(this.prevJson.elapsedTime).toFixed(2)}`;
-    this.infoText = version;
-
-    let img = new Image();
-    img.addEventListener('load', () => {
-      let canvas = this.ctx.canvas;
-      let { naturalWidth: width, naturalHeight: height } = img;
-      console.log('loaded', width, height)
-      let aRatio = width/height;
-      this.cameraWidth = canvas.width = this.matCardWidth;
-      this.cameraHeight = canvas.height = canvas.width / aRatio;
-      this.ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-
-      height = canvas.height;
-      width = canvas.width;
-      aRatio = width/height;
-      this.dataSource = [];
-      this.prevJson.bbox.forEach((box: any) => {
-        let bbox = box.detectedBox;
-        if(objDetected[box.detectedClass]) {
-          objDetected[box.detectedClass]++;
-        } else {
-          objDetected[box.detectedClass] = 1;
-        }
-        this.dataSource.push({
-          label: box.detectedClass,
-          score: parseFloat(box.detectedScore).toFixed(2),
-          min: `(${(bbox[0]/aRatio).toFixed(2)},${(bbox[1]/aRatio).toFixed(2)})`,
-          max: `(${(bbox[2]/aRatio).toFixed(2)},${(bbox[3]/aRatio).toFixed(2)})`
-        })
-
-        this.ctx.fillStyle = 'rgba(255,255,255,0.2)';
-        this.ctx.strokeStyle = 'yellow';
-        this.ctx.fillRect(bbox[1] * (width / aRatio), bbox[0] * (height / aRatio), width / aRatio * (bbox[3] - bbox[1]),
-        height / aRatio * (bbox[2] - bbox[0]));
-        this.ctx.font = '20px Arial';
-        this.ctx.fillStyle = 'black';
-        this.ctx.fillText(`${box.detectedClass}: ${box.detectedScore}`, +parseFloat((bbox[1] * width).toString()).toFixed(2), +parseFloat((bbox[0] * height).toString()).toFixed(2), +parseFloat((bbox[0] * height).toString()).toFixed(2));
-        this.ctx.lineWidth = 2;
-        this.ctx.strokeRect(+parseFloat((bbox[1] * width).toString()).toFixed(2), +parseFloat((bbox[0] * height).toString()).toFixed(2), +parseFloat((width * (bbox[3] - bbox[1])).toString()).toFixed(2), +parseFloat((height * (bbox[2] - bbox[0])).toString()).toFixed(2));
-      })
-    });
-    img.src = `/static/images/image-old.png?${new Date().getTime()}`;
   }
   drawBBox() {
     console.log('choose a file')

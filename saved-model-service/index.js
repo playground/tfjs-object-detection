@@ -38,8 +38,14 @@ let confidentCutoff = 0.85;
 const $score = new Subject().asObservable().subscribe((data) => {
   if(data.name == 'score') {
     confidentCutoff = parseFloat(data.score).toFixed(2);
-    console.log('subscribe: ', data)  
-    ieam.renameFile(oldImage, `${imagePath}/image.png`);  
+    console.log('subscribe: ', data) 
+    if(data.assetType === 'Image') {
+      ieam.renameFile(oldImage, `${imagePath}/image.png`);  
+    } else {
+      images = ieam.getFiles(videoPath, /.jpg|.png/);
+      console.log(images)
+      ieam.inferenceVideo(images);  
+    } 
   }
 });
 
@@ -212,6 +218,7 @@ let ieam = {
       try {
         if(existsSync(file)) {
           console.log(file)
+          ieam.deleteFiles(videoPath, /.jpg|.png/);
           let process = new ffmpeg(file);
           process.then((video) => {
             video.fnExtractFrameToJPG(videoPath, {
@@ -252,32 +259,38 @@ let ieam = {
     observer.complete();    
   },
   checkMMS: () => {
-    let list;
-    let config;
-    if(existsSync(mmsPath)) {
-      list = readdirSync(mmsPath);
-      list = list.filter(item => /(\.zip)$/.test(item));
-      sharedPath = mmsPath;  
-    } else if(existsSync(localPath)) {
-      list = readdirSync(localPath);
-      config = list.filter(item => item === 'config.json');
-      list = list.filter(item => /(\.zip)$/.test(item));
-      sharedPath = localPath;
-      let video = `${videoPath}/video.mp4`;
-      if(!existsSync(video)) {
-        video = `${videoPath}/video.avi`;
-      }
-      ieam.extractVideo(video)
-      .subscribe((files) => {
-        if(files.length > 0) {
-          let images = files.filter((f) => f.indexOf('.jpg') > 0);
-          let video = files.filter((f) => f.indexOf('.jpg') < 0);
-          unlinkSync(video[0]);
-          ieam.inferenceVideo(images);  
+    try {
+      let list;
+      let config;
+      if(existsSync(mmsPath)) {
+        list = readdirSync(mmsPath);
+        list = list.filter(item => /(\.zip)$/.test(item));
+        sharedPath = mmsPath;  
+      } else if(existsSync(localPath)) {
+        list = readdirSync(localPath);
+        config = list.filter(item => item === 'config.json');
+        list = list.filter(item => /(\.zip)$/.test(item));
+        sharedPath = localPath;
+        let video = `${videoPath}/video.mp4`;
+        if(!existsSync(video)) {
+          video = `${videoPath}/video.avi`;
         }
-      })
+        ieam.extractVideo(video)
+        .subscribe((files) => {
+          if(files.length > 0) {
+            let images = files.filter((f) => f.indexOf('.jpg') > 0);
+            let video = files.filter((f) => f.indexOf('.jpg') < 0);
+            if(existsSync(video[0])) {
+              unlinkSync(video[0]);
+            }
+            ieam.inferenceVideo(images);  
+          }
+        })
+      }
+      return list;  
+    } catch(e) {
+      console.log(e)
     }
-    return list;
   },
   unzipMMS: (files) => {
     return new Observable((observer) => {
@@ -325,6 +338,22 @@ let ieam = {
         }
       });
     });    
+  },
+  getFiles: (srcDir, ext) => {
+    let files = readdirSync(srcDir);
+    return files.map((file) => {
+      if(ext && file.match(ext)) {
+        return `${srcDir}/${file}`;
+      }
+    });  
+  },
+  deleteFiles: (srcDir, ext) => {
+    let files = readdirSync(srcDir);
+    files.forEach((file) => {
+      if(ext && file.match(ext)) {
+        unlinkSync(`${videoPath}/${file}`)
+      }
+    });
   },
   removeFiles: (srcDir) => {
     return new Observable((observer) => {

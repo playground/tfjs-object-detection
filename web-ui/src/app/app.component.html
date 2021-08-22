@@ -83,12 +83,12 @@
       (cameraSwitched)="cameraWasSwitched($event)"></webcam>
 
       <div *ngFor="let image of images">
-        <mat-card-subtitle style="margin-top:3px;">{{infoText}}</mat-card-subtitle>
+        <mat-card-subtitle style="margin-top:3px;">{{image.infoText}}</mat-card-subtitle>
 
         <!-- <canvas #canvas *ngIf="showCanvas"></canvas> -->
         <canvas [className]="image.class"></canvas>
 
-        <table mat-table [dataSource]="dataSource" class="mat-elevation-z8">
+        <table mat-table [dataSource]="image.dataSource" class="mat-elevation-z8">
 
           <!--- Note that these columns can be defined in any order.
                 The actual rendered columns are set as a property on the row definition" -->
