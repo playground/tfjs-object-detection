@@ -128,7 +128,15 @@ export class AppComponent implements OnInit, AfterViewInit {
     keys.forEach((key) => {
       this.images.push({name: key, class: key.replace(/\/|\./g, '-')});
     })
+    let cnt = 0;
+    while(cnt < 5 && keys.length > 0 && !document.querySelector(`.${keys[keys.length-1].replace(/\/|\./g, '-')}`)) {
+      this.sleep(1000);
+      cnt++;
+    }
     setTimeout(() => this.preDraw(), 2000);
+  }
+  sleep(ms: number) {
+    return new Promise(resolve => setTimeout(resolve, ms));
   }
   preDraw() {
     this.images.forEach((image) => this.drawImage(image));

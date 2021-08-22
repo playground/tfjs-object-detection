@@ -13,12 +13,12 @@
           "detectedScore": "1.00"
         }
       ],
-      "elapsedTime": 247.78976202011108
+      "elapsedTime": 327.16052293777466
     }
   },
   "version": {
     "name": "Demo model",
     "version": "1.0.0"
   },
-  "confidentCutoff": "0.90"
+  "confidentCutoff": "0.95"
 }

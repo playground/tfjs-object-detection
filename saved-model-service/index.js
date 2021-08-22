@@ -244,6 +244,7 @@ let ieam = {
             observer.complete();
           })
         } else {
+          console.log(`${file} not found`)
           observer.next([]);
           observer.complete();    
         }
@@ -266,14 +267,13 @@ let ieam = {
         list = readdirSync(mmsPath);
         list = list.filter(item => /(\.zip)$/.test(item));
         sharedPath = mmsPath;  
-        ieam.checkVideo();
       } else if(existsSync(localPath)) {
         list = readdirSync(localPath);
         config = list.filter(item => item === 'config.json');
         list = list.filter(item => /(\.zip)$/.test(item));
         sharedPath = localPath;
-        ieam.checkVideo();
       }
+      ieam.checkVideo();
       return list;  
     } catch(e) {
       console.log(e)
@@ -284,6 +284,9 @@ let ieam = {
       let video = `${videoPath}/video.mp4`;
       if(!existsSync(video)) {
         video = `${videoPath}/video.avi`;
+      }
+      if(!existsSync(video)) {
+        return;
       }
       ieam.extractVideo(video)
       .subscribe((files) => {

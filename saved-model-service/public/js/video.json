@@ -13,7 +13,7 @@
           "detectedScore": "1.00"
         }
       ],
-      "elapsedTime": 283.11206579208374
+      "elapsedTime": 434.8971700668335
     },
     "/static/video/image_2.jpg": {
       "bbox": [
@@ -28,11 +28,11 @@
           "detectedScore": "0.97"
         }
       ],
-      "elapsedTime": 242.5209300518036
+      "elapsedTime": 428.03383684158325
     },
     "/static/video/image_3.jpg": {
       "bbox": [],
-      "elapsedTime": 236.07537293434143
+      "elapsedTime": 389.4135420322418
     }
   },
   "version": {
