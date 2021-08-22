@@ -57,7 +57,7 @@ const state = {
 };
 process.env.npm_config_cameraOn = false;
 
-console.log('platform ', process.platform)
+console.log('platform ', process.platform, process.arch)
 
 mp3s = {
   'snapshot': './public/media/audio-snap.mp3',
@@ -109,7 +109,7 @@ let ieam = {
         .subscribe((json) => {
           let images = {};
           images['/static/images/image-old.png'] = json;
-          json = Object.assign({images: images, version: version, confidentCutoff: confidentCutoff});
+          json = Object.assign({images: images, version: version, confidentCutoff: confidentCutoff, platform: `${process.platform}:${process.arch}`});
           jsonfile.writeFile(`${staticPath}/image.json`, json, {spaces: 2});
           ieam.renameFile(imageFile, `${imagePath}/image-old.png`);
           ieam.soundEffect(mp3s.theForce);  
@@ -170,7 +170,7 @@ let ieam = {
       .subscribe({
         next: (value) => {
           console.log(value);
-          let json = Object.assign({}, {images: value, version: version, confidentCutoff: confidentCutoff});
+          let json = Object.assign({}, {images: value, version: version, confidentCutoff: confidentCutoff, platform: `${process.platform}:${process.arch}`});
           jsonfile.writeFile(`${staticPath}/video.json`, json, {spaces: 2});
           ieam.soundEffect(mp3s.theForce);  
         },

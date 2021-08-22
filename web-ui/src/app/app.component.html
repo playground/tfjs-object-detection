@@ -82,8 +82,8 @@
       <webcam [height]="cameraHeight" [width]="cameraWidth" [trigger]="triggerObservable" (imageCapture)="handleImage($event)" *ngIf="showWebcam" [allowCameraSwitch]="allowCameraSwitch" [switchCamera]="nextWebcamObservable"
       (cameraSwitched)="cameraWasSwitched($event)"></webcam>
 
+      <mat-card-subtitle style="margin-bottom:5px;">{{platform}}</mat-card-subtitle>
       <div *ngFor="let image of images">
-        <mat-card-subtitle style="margin-top:3px;">{{image.infoText}}</mat-card-subtitle>
 
         <!-- <canvas #canvas *ngIf="showCanvas"></canvas> -->
         <canvas [className]="image.class"></canvas>
@@ -120,6 +120,7 @@
           <tr mat-header-row *matHeaderRowDef="columns"></tr>
           <tr mat-row *matRowDef="let row; columns: columns;"></tr>
         </table>
+        <mat-card-subtitle style="margin-bottom:5px;margin-top:3px;">{{image.infoText}}</mat-card-subtitle>
 
       </div>
     </mat-card-content>

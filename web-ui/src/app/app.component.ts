@@ -53,6 +53,7 @@ export class AppComponent implements OnInit, AfterViewInit {
   assetTypes: string[] = ['Image', 'Video'];
   assetType = 'Image';
   images: any[] = [];
+  platform: string = '';
 
   constructor(
     private http: HttpClient,
@@ -123,6 +124,9 @@ export class AppComponent implements OnInit, AfterViewInit {
     });
   }
   drawComponent() {
+    let vobj = this.prevJson.version || undefined;
+    let version = vobj ? `Model: ${vobj.name} v${vobj.version}` : 'version missing';
+    this.platform = `${this.prevJson.platform} | ${version}`;
     let keys = Object.keys(this.prevJson.images);
     this.images = [];
     keys.forEach((key) => {
@@ -147,11 +151,8 @@ export class AppComponent implements OnInit, AfterViewInit {
     let ctx = el.getContext('2d');
     let canvas = ctx.canvas;
     let img = new Image();
-    let vobj = this.prevJson.version || undefined;
-    let version = vobj ? `Model: ${vobj.name} v${vobj.version}` : 'version missing';
     let currentImage = this.prevJson.images[image.name];
-    version += ` | Inference time: ${parseFloat(currentImage.elapsedTime).toFixed(2)}`;
-    image.infoText = version;
+    image.infoText = ` | Inference time: ${parseFloat(currentImage.elapsedTime).toFixed(2)}`;
 
     img.addEventListener('load', () => {
       let { naturalWidth: width, naturalHeight: height } = img;

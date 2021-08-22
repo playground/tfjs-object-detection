@@ -13,7 +13,7 @@
           "detectedScore": "1.00"
         }
       ],
-      "elapsedTime": 434.8971700668335
+      "elapsedTime": 361.35695695877075
     },
     "/static/video/image_2.jpg": {
       "bbox": [
@@ -28,16 +28,17 @@
           "detectedScore": "0.97"
         }
       ],
-      "elapsedTime": 428.03383684158325
+      "elapsedTime": 248.46642994880676
     },
     "/static/video/image_3.jpg": {
       "bbox": [],
-      "elapsedTime": 389.4135420322418
+      "elapsedTime": 239.72025299072266
     }
   },
   "version": {
     "name": "Demo model",
     "version": "1.0.0"
   },
-  "confidentCutoff": "0.90"
+  "confidentCutoff": "0.95",
+  "platform": "darwin:x64"
 }
