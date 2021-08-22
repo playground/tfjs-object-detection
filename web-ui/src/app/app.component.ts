@@ -268,7 +268,7 @@ export class AppComponent implements OnInit, AfterViewInit {
     return this.nextWebcam.asObservable();
   }
   onSubmit(f: NgForm) {
-    const allowedFiles = [".png", ".jpg", ".gif", ".mp4", ".avi"];
+    const allowedFiles = [".png", ".jpg", ".gif", ".mp4", ".avi", ".webm"];
     const regex = new RegExp("([a-zA-Z0-9\s_\\.\-:])+(" + allowedFiles.join('|') + ")$");
     if(this.selectedFile && this.selectedFile.name && regex.test(this.selectedFile.name.toLowerCase())) {
       this.uploadPhoto(this.selectedFile);

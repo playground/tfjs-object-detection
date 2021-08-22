@@ -33,7 +33,7 @@ let sharedPath = '';
 let timer;
 const intervalMS = 10000;
 let count = 0;
-let previousImage;
+let videoFormat = ['.mp4', '.avi', '.webm'];
 let confidentCutoff = 0.85;
 const $score = new Subject().asObservable().subscribe((data) => {
   if(data.name == 'score') {
@@ -281,13 +281,20 @@ let ieam = {
   },
   checkVideo: () => {
     try {
-      let video = `${videoPath}/video.mp4`;
-      if(!existsSync(video)) {
-        video = `${videoPath}/video.avi`;
-      }
-      if(!existsSync(video)) {
+      let video = undefined;
+      videoFormat.every((ext) => {
+        let v = `${videoPath}/video${ext}`;
+        if(existsSync(v)) {
+          video = v;
+          return false;
+        } else {
+          return true;
+        }
+      })
+      if(!video) {
         return;
       }
+      console.log('here')
       ieam.extractVideo(video)
       .subscribe((files) => {
         if(files.length > 0) {
