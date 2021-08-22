@@ -285,7 +285,7 @@ export class AppComponent implements OnInit, AfterViewInit {
   }
   setInterval(ms: number) {
     this.timer = setInterval(async () => {
-      this.loadJson(`/static/js/${this.assetType}.json`);
+      this.loadJson(`/static/js/${this.assetType.toLowerCase()}.json`);
     }, ms);
   }
   resetTimer() {
