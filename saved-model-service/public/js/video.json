@@ -1,0 +1,43 @@
+{
+  "images": {
+    "/static/video/image_1.jpg": {
+      "bbox": [
+        {
+          "detectedBox": [
+            "0.14",
+            "0.37",
+            "0.35",
+            "0.51"
+          ],
+          "detectedClass": "hard-hat",
+          "detectedScore": "1.00"
+        }
+      ],
+      "elapsedTime": 283.11206579208374
+    },
+    "/static/video/image_2.jpg": {
+      "bbox": [
+        {
+          "detectedBox": [
+            "0.11",
+            "0.51",
+            "0.28",
+            "0.66"
+          ],
+          "detectedClass": "hard-hat",
+          "detectedScore": "0.97"
+        }
+      ],
+      "elapsedTime": 242.5209300518036
+    },
+    "/static/video/image_3.jpg": {
+      "bbox": [],
+      "elapsedTime": 236.07537293434143
+    }
+  },
+  "version": {
+    "name": "Demo model",
+    "version": "1.0.0"
+  },
+  "confidentCutoff": "0.90"
+}

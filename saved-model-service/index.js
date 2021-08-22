@@ -266,30 +266,38 @@ let ieam = {
         list = readdirSync(mmsPath);
         list = list.filter(item => /(\.zip)$/.test(item));
         sharedPath = mmsPath;  
+        ieam.checkVideo();
       } else if(existsSync(localPath)) {
         list = readdirSync(localPath);
         config = list.filter(item => item === 'config.json');
         list = list.filter(item => /(\.zip)$/.test(item));
         sharedPath = localPath;
-        let video = `${videoPath}/video.mp4`;
-        if(!existsSync(video)) {
-          video = `${videoPath}/video.avi`;
-        }
-        ieam.extractVideo(video)
-        .subscribe((files) => {
-          if(files.length > 0) {
-            let images = files.filter((f) => f.indexOf('.jpg') > 0);
-            let video = files.filter((f) => f.indexOf('.jpg') < 0);
-            if(existsSync(video[0])) {
-              unlinkSync(video[0]);
-            }
-            ieam.inferenceVideo(images);  
-          }
-        })
+        ieam.checkVideo();
       }
       return list;  
     } catch(e) {
       console.log(e)
+    }
+  },
+  checkVideo: () => {
+    try {
+      let video = `${videoPath}/video.mp4`;
+      if(!existsSync(video)) {
+        video = `${videoPath}/video.avi`;
+      }
+      ieam.extractVideo(video)
+      .subscribe((files) => {
+        if(files.length > 0) {
+          let images = files.filter((f) => f.indexOf('.jpg') > 0);
+          let video = files.filter((f) => f.indexOf('.jpg') < 0);
+          if(existsSync(video[0])) {
+            unlinkSync(video[0]);
+          }
+          ieam.inferenceVideo(images);  
+        }
+      })
+    } catch(e) {
+      console.log(e);
     }
   },
   unzipMMS: (files) => {
