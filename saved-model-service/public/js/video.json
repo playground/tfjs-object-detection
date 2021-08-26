@@ -1,0 +1,60 @@
+{
+  "images": {
+    "/static/video/image_1.jpg": {
+      "bbox": [
+        {
+          "detectedBox": [
+            "0.12",
+            "0.73",
+            "0.35",
+            "0.90"
+          ],
+          "detectedClass": "hard-hat",
+          "detectedScore": "1.00"
+        },
+        {
+          "detectedBox": [
+            "0.05",
+            "0.57",
+            "0.24",
+            "0.74"
+          ],
+          "detectedClass": "hard-hat",
+          "detectedScore": "1.00"
+        }
+      ],
+      "elapsedTime": 412.37406301498413
+    },
+    "/static/video/image_2.jpg": {
+      "bbox": [
+        {
+          "detectedBox": [
+            "0.06",
+            "0.61",
+            "0.33",
+            "0.77"
+          ],
+          "detectedClass": "hard-hat",
+          "detectedScore": "1.00"
+        },
+        {
+          "detectedBox": [
+            "0.16",
+            "0.81",
+            "0.39",
+            "0.98"
+          ],
+          "detectedClass": "hard-hat",
+          "detectedScore": "1.00"
+        }
+      ],
+      "elapsedTime": 304.9086170196533
+    }
+  },
+  "version": {
+    "name": "Demo model",
+    "version": "1.0.0"
+  },
+  "confidentCutoff": 0.85,
+  "platform": "darwin:x64"
+}

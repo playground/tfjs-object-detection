@@ -1,7 +1,10 @@
 let tfnode = require('@tensorflow/tfjs-node');
 const {unlinkSync, stat, renameSync, readdir, readdirSync, existsSync, readFileSync, copyFileSync, mkdirSync} = require('fs');
 const jsonfile = require('jsonfile');
-const { Observable } = require('rxjs');
+const { Observable, Subject, forkJoin } = require('rxjs');
+const ffmpeg = require('ffmpeg');
+const https = require('https');
+const http = require('http');
 const cp = require('child_process'),
 exec = cp.exec;
 const player = require('play-sound')();
@@ -24,11 +27,30 @@ const oldModelPath = './model-old';
 const staticPath = './public/js';
 const mmsPath = '/mms-shared';
 const localPath = './local-shared';
+const videoPath = './public/video';
+const oldImage = `${imagePath}/image-old.png`;
 let sharedPath = '';
 let timer;
 const intervalMS = 10000;
 let count = 0;
-let previousImage;
+let videoFormat = ['.mp4', '.avi', '.webm'];
+let cameraDisabled = true;
+let confidentCutoff = 0.85;
+const $score = new Subject().asObservable().subscribe((data) => {
+  if(data.name == 'score') {
+    confidentCutoff = parseFloat(data.score).toFixed(2);
+    console.log('subscribe: ', data) 
+    if(data.assetType === 'Image') {
+      ieam.renameFile(oldImage, `${imagePath}/image.png`);  
+    } else {
+      images = ieam.getFiles(videoPath, /.jpg|.png/);
+      console.log(images)
+      ieam.inferenceVideo(images);  
+    } 
+  }
+});
+
+module.exports.$score = $score;
 
 const state = {
   server: null,
@@ -36,7 +58,7 @@ const state = {
 };
 process.env.npm_config_cameraOn = false;
 
-console.log('platform ', process.platform)
+console.log('platform ', process.platform, process.arch)
 
 mp3s = {
   'snapshot': './public/media/audio-snap.mp3',
@@ -84,45 +106,83 @@ let ieam = {
         const image = readFileSync(imageFile);
         const decodedImage = tfnode.node.decodeImage(new Uint8Array(image), 3);
         const inputTensor = decodedImage.expandDims(0);
-        await ieam.inference(inputTensor, imageFile);
-        ieam.doCapture = true;
+        ieam.inference(inputTensor)
+        .subscribe((json) => {
+          let images = {};
+          images['/static/images/image-old.png'] = json;
+          json = Object.assign({images: images, version: version, confidentCutoff: confidentCutoff, platform: `${process.platform}:${process.arch}`, cameraDisabled: cameraDisabled});
+          jsonfile.writeFile(`${staticPath}/image.json`, json, {spaces: 2});
+          ieam.renameFile(imageFile, `${imagePath}/image-old.png`);
+          ieam.soundEffect(mp3s.theForce);  
+          ieam.doCapture = true;  
+        });
       } catch(e) {
         console.log(e);
         unlinkSync(imageFile);
       }
     }  
   },  
-  inference: async (inputTensor, imageFile) => {
-    const startTime = tfnode.util.now();
-    let outputTensor = await model.predict({input_tensor: inputTensor});
-    const scores = await outputTensor['detection_scores'].arraySync();
-    const boxes = await outputTensor['detection_boxes'].arraySync();
-    const classes = await outputTensor['detection_classes'].arraySync();
-    const num = await outputTensor['num_detections'].arraySync();
-    const endTime = tfnode.util.now();
-    outputTensor['detection_scores'].dispose();
-    outputTensor['detection_boxes'].dispose();
-    outputTensor['detection_classes'].dispose();
-    outputTensor['num_detections'].dispose();
-    
-    let predictions = [];
-    const elapsedTime = endTime - startTime;
-    for (let i = 0; i < scores[0].length; i++) {
-      if (scores[0][i] > 0.6) {
-        predictions.push({
-          detectedBox: boxes[0][i].map((el)=>el.toFixed(3)),
-          detectedClass: labels[classes[0][i]],
-          detectedScore: scores[0][i].toFixed(3)
-        });
+  inference: (inputTensor) => {
+    return new Observable((observer) => {
+      const startTime = tfnode.util.now();
+      let outputTensor = model.predict({input_tensor: inputTensor});
+      const scores = outputTensor['detection_scores'].arraySync();
+      const boxes = outputTensor['detection_boxes'].arraySync();
+      const classes = outputTensor['detection_classes'].arraySync();
+      const num = outputTensor['num_detections'].arraySync();
+      const endTime = tfnode.util.now();
+      outputTensor['detection_scores'].dispose();
+      outputTensor['detection_boxes'].dispose();
+      outputTensor['detection_classes'].dispose();
+      outputTensor['num_detections'].dispose();
+      
+      let predictions = [];
+      const elapsedTime = endTime - startTime;
+      for (let i = 0; i < scores[0].length; i++) {
+        let score = scores[0][i].toFixed(2);
+        if (score >= confidentCutoff) {
+          predictions.push({
+            detectedBox: boxes[0][i].map((el)=>el.toFixed(2)),
+            detectedClass: labels[classes[0][i]],
+            detectedScore: score
+          });
+        }
       }
-    }
-    console.log('predictions:', predictions.length, predictions[0]);
-    console.log('time took: ', elapsedTime);
-    console.log('build json...');
-    jsonfile.writeFile(`${staticPath}/image.json`, {bbox: predictions, elapsedTime: elapsedTime, version: version}, {spaces: 2});
-    ieam.renameFile(imageFile, `${imagePath}/image-old.png`);
-    ieam.soundEffect(mp3s.theForce);  
+      console.log('predictions:', predictions.length, predictions[0]);
+      console.log('time took: ', elapsedTime);
+      console.log('build json...');
+      observer.next({bbox: predictions, elapsedTime: elapsedTime});
+      observer.complete();  
+    });
   },
+  inferenceVideo: (files) => {
+    try {
+      let $inference = {};
+      files.forEach(async (imageFile) => {
+        if(existsSync(imageFile)) {
+          console.log(imageFile)
+          const image = readFileSync(imageFile);
+          const decodedImage = tfnode.node.decodeImage(new Uint8Array(image), 3);
+          const inputTensor = decodedImage.expandDims(0);
+          $inference[imageFile.replace('./public/', '/static/')] = (ieam.inference(inputTensor));
+        }
+      })
+      forkJoin($inference)
+      .subscribe({
+        next: (value) => {
+          console.log(value);
+          let json = Object.assign({}, {images: value, version: version, confidentCutoff: confidentCutoff, platform: `${process.platform}:${process.arch}`, cameraDisabled: cameraDisabled});
+          jsonfile.writeFile(`${staticPath}/video.json`, json, {spaces: 2});
+          ieam.soundEffect(mp3s.theForce);  
+        },
+        complete: () => {
+          console.log('complete');
+        }
+      });
+    } catch(e) {
+      console.log(e);
+    }
+},
   traverse: (dir, done) => {
     var results = [];
     readdir(dir, (err, list) => {
@@ -146,18 +206,110 @@ let ieam = {
       })();
     });
   },
+  readConfig: (configs) => {
+    configs.forEach((config) => {
+      let json = jsonfilereadFileSync(`${sharedPath}/${config}`);
+      if(json && json.modelPath) {
+        
+      }
+    })
+  },
+  extractVideo: (file) => {
+    return new Observable((observer) => {
+      try {
+        if(existsSync(file)) {
+          console.log(file)
+          ieam.deleteFiles(videoPath, /.jpg|.png/);
+          let process = new ffmpeg(file);
+          process.then((video) => {
+            video.fnExtractFrameToJPG(videoPath, {
+              every_n_frames: 150,
+              number: 5,
+              keep_pixel_aspect_ratio : true,
+              keep_aspect_ratio: true,
+              file_name : `image.jpg`
+            }, (err, files) => {
+              if(!err) {
+                console.log('video file: ', files);
+                observer.next(files);
+                observer.complete();        
+              } else {
+                console.log('video err: ', err);
+                observer.next();
+                observer.complete();    
+              }
+            })  
+          }, (err) => {
+            console.log('err: ', err);
+            observer.next([]);
+            observer.complete();
+          })
+        } else {
+          console.log(`${file} not found`)
+          observer.next([]);
+          observer.complete();    
+        }
+      } catch(e) {
+        console.log('error: ', e.msg);
+        observer.next([]);
+        observer.complete();
+      }
+    });
+  },
+  observerReturn: (observer, data) => {
+    observer.next(data);
+    observer.complete();    
+  },
   checkMMS: () => {
-    let list;
-    if(existsSync(mmsPath)) {
-      list = readdirSync(mmsPath);
-      list = list.filter(item => /(\.zip)$/.test(item));
-      sharedPath = mmsPath;  
-    } else if(existsSync(localPath)) {
-      list = readdirSync(localPath);
-      list = list.filter(item => /(\.zip)$/.test(item));
-      sharedPath = localPath;
+    try {
+      let list;
+      let config;
+      if(existsSync(mmsPath)) {
+        list = readdirSync(mmsPath);
+        list = list.filter(item => /(\.zip)$/.test(item));
+        sharedPath = mmsPath;  
+      } else if(existsSync(localPath)) {
+        list = readdirSync(localPath);
+        config = list.filter(item => item === 'config.json');
+        list = list.filter(item => /(\.zip)$/.test(item));
+        sharedPath = localPath;
+      }
+      ieam.checkVideo();
+      return list;  
+    } catch(e) {
+      console.log(e)
     }
-    return list;
+  },
+  checkVideo: () => {
+    try {
+      let video = undefined;
+      videoFormat.every((ext) => {
+        let v = `${videoPath}/video${ext}`;
+        if(existsSync(v)) {
+          video = v;
+          return false;
+        } else {
+          return true;
+        }
+      })
+      if(!video) {
+        return;
+      }
+      console.log('here')
+      ieam.extractVideo(video)
+      .subscribe((files) => {
+        if(files.length > 0) {
+          let images = files.filter((f) => f.indexOf('.jpg') > 0);
+          let video = files.filter((f) => f.indexOf('.jpg') < 0);
+          if(existsSync(video[0])) {
+            unlinkSync(video[0]);
+          }
+          ieam.inferenceVideo(images);  
+        }
+      })
+    } catch(e) {
+      console.log(e);
+    }
   },
   unzipMMS: (files) => {
     return new Observable((observer) => {
@@ -205,6 +357,22 @@ let ieam = {
         }
       });
     });    
+  },
+  getFiles: (srcDir, ext) => {
+    let files = readdirSync(srcDir);
+    return files.map((file) => {
+      if(ext && file.match(ext)) {
+        return `${srcDir}/${file}`;
+      }
+    });  
+  },
+  deleteFiles: (srcDir, ext) => {
+    let files = readdirSync(srcDir);
+    files.forEach((file) => {
+      if(ext && file.match(ext)) {
+        unlinkSync(`${videoPath}/${file}`)
+      }
+    });
   },
   removeFiles: (srcDir) => {
     return new Observable((observer) => {
@@ -317,6 +485,7 @@ let ieam = {
     }, ms);
   },
   initialInference: () => {
+    cameraDisabled = process.platform !== 'darwin' && !existsSync('/dev/video0');
     if(!existsSync(currentModelPath)) {
       mkdirSync(currentModelPath);
     }
@@ -326,7 +495,6 @@ let ieam = {
     if(!existsSync(oldModelPath)) {
       mkdirSync(oldModelPath);
     }
-    let oldImage = `${imagePath}/image-old.png`;
     if(!existsSync(oldImage)) {
       copyFileSync(`${imagePath}/backup.png`, oldImage)
     }
@@ -334,9 +502,25 @@ let ieam = {
   },
   start: () => {
     count = 0;
-    state.server = require('./server')().listen(3000, () => {
-      console.log('Started on 3000');
-    });
+    let app = require('./server')();
+    if(existsSync('certs/private.key') && existsSync('certs/certificate.crt') && existsSync('certs/carootcert.der') && existsSync('certs/caintermediatecert.der')) {
+      const credentials = {
+        passphrase: 'ieam',
+        key: readFileSync('certs/private.key', 'ascii'),
+        cert: readFileSync('certs/certificate.crt', 'ascii'),
+        ca: [readFileSync('certs/carootcert.der', 'ascii'), readFileSync('certs/caintermediatecert.der', 'ascii')]
+      }
+      https.Server(credentials, app).listen(443, () => {
+        console.log('Started on 443');
+      });
+      state.server = app.listen(80, () => {
+        console.log('Started on 80');
+      });
+    } else {
+      state.server = app.listen(3000, () => {
+        console.log('Started on 3000');
+      });
+    }
     state.server.on('connection', (socket) => {
       // console.log('Add socket', state.sockets.length + 1);
       state.sockets.push(socket);

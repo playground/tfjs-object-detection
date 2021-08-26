@@ -37,7 +37,6 @@ export class AppComponent implements OnInit, AfterViewInit {
   uploaded = '';
   matCardHeight: number;
   matCardWidth: number;
-  infoText: string;
   horizontalPosition: MatSnackBarHorizontalPosition = 'center';
   verticalPosition: MatSnackBarVerticalPosition = 'bottom';
   webcamImage: WebcamImage = null;
@@ -49,12 +48,22 @@ export class AppComponent implements OnInit, AfterViewInit {
   showWebcam = false;
   cameraHeight: number = 261;
   cameraWidth: number = 466;
+  scores: string[] = ['0.95', '0.90', '0.85', '0.80', '0.75', '0.70', '0.65', '0.60', '0.55', '0.50', '0.45', '0.40', '0.35', '0.30', '0.25', '0.20', '0.15', '0.10'];
+  cutoff: string;
+  assetTypes: string[] = ['Image', 'Video'];
+  assetType = 'Image';
+  images: any[] = [];
+  platform: string = '';
+  isCameraDisabled: boolean;
+  isServerCameraDisabled: boolean = true;
 
   constructor(
     private http: HttpClient,
-    private snackBar: MatSnackBar
+    private snackBar: MatSnackBar,
+    private elementRef: ElementRef
   ){}
   ngOnInit(): void {
+    this.isCameraDisabled = location.hostname.indexOf('localhost') < 0 && location.protocol !== 'https';
     // WebcamUtil.getAvailableVideoInputs()
     //   .then((mediaDevices: MediaDeviceInfo[]) => {
     //     // this.multipleWebcamsAvailable = mediaDevices && mediaDevices.length > 1;
@@ -62,13 +71,13 @@ export class AppComponent implements OnInit, AfterViewInit {
   }
   ngAfterViewInit(): void {
     this.getMatCardSize();
-    this.ctx = this.canvas.nativeElement.getContext('2d');
+    // this.ctx = this.canvas.nativeElement.getContext('2d');
     this.setInterval(this.intervalMS);
   }
   @HostListener('window:resize', ['$event'])
   onResize(event?:any) {
     this.getMatCardSize();
-    this.drawImage();
+    this.drawComponent();
   }
   getMatCardSize() {
     this.matCardHeight = this.matCard.nativeElement.offsetHeight;
@@ -88,6 +97,23 @@ export class AppComponent implements OnInit, AfterViewInit {
       this.uploaded = '';
     }
   }
+  onScoreChange(evt: any) {
+    if(evt.isUserInput) {
+      console.log(evt)
+      this.http.get(`/score?score=${evt.source.value}&assetType=${this.assetType}`)
+      .subscribe((data) => {
+        console.log('json', data)
+      });
+    }
+  }
+  onAssetTypeChange(evt: any) {
+    if(evt.isUserInput) {
+      console.log(evt)
+      this.assetType = evt.source.value;
+      this.loadJson(`/static/js/${this.assetType.toLowerCase()}.json`);
+      this.resetTimer();
+    }
+  }
   loadJson(file: any) {
     this.http.get(file)
     .subscribe((data) => {
@@ -95,57 +121,83 @@ export class AppComponent implements OnInit, AfterViewInit {
       if(JSON.stringify(data) !== JSON.stringify(this.prevJson)) {
         console.log(data)
         this.prevJson = data;
-        this.drawImage();
+        this.cutoff = ''+this.prevJson.confidentCutoff;
+        this.isServerCameraDisabled = this.prevJson.cameraDisabled;
+        this.drawComponent();
       }
     });
   }
-  drawImage() {
-    let objDetected:any = {};
+  drawComponent() {
     let vobj = this.prevJson.version || undefined;
     let version = vobj ? `Model: ${vobj.name} v${vobj.version}` : 'version missing';
-    version += ` | Inference time: ${parseFloat(this.prevJson.elapsedTime).toFixed(2)}`;
-    this.infoText = version;
-
+    this.platform = `${this.prevJson.platform} | ${version}`;
+    let keys = Object.keys(this.prevJson.images);
+    this.images = [];
+    keys.forEach((key) => {
+      this.images.push({name: key, class: key.replace(/\/|\./g, '-')});
+    })
+    let cnt = 0;
+    while(cnt < 5 && keys.length > 0 && !document.querySelector(`.${keys[keys.length-1].replace(/\/|\./g, '-')}`)) {
+      this.sleep(1000);
+      cnt++;
+    }
+    setTimeout(() => this.preDraw(), 2000);
+  }
+  sleep(ms: number) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+  preDraw() {
+    this.images.forEach((image) => this.drawImage(image));
+  }
+  drawImage(image: any) {
+    let objDetected:any = {};
+    let el = <HTMLCanvasElement> document.querySelector(`.${image.class}`);
+    let ctx = el.getContext('2d');
+    let canvas = ctx.canvas;
     let img = new Image();
+    let currentImage = this.prevJson.images[image.name];
+    image.infoText = ` | Inference time: ${parseFloat(currentImage.elapsedTime).toFixed(2)}`;
+
     img.addEventListener('load', () => {
-      let canvas = this.ctx.canvas;
       let { naturalWidth: width, naturalHeight: height } = img;
       console.log('loaded', width, height)
       let aRatio = width/height;
-      this.cameraWidth = canvas.width = this.matCardWidth - 2;
+      this.cameraWidth = canvas.width = this.matCardWidth;
       this.cameraHeight = canvas.height = canvas.width / aRatio;
-      this.ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
       height = canvas.height;
       width = canvas.width;
       aRatio = width/height;
-      this.dataSource = [];
-      this.prevJson.bbox.forEach((box: any) => {
+      let dataSource: any[] = [];
+      currentImage.bbox.forEach((box: any) => {
         let bbox = box.detectedBox;
         if(objDetected[box.detectedClass]) {
           objDetected[box.detectedClass]++;
         } else {
           objDetected[box.detectedClass] = 1;
         }
-        this.dataSource.push({
+        dataSource.push({
           label: box.detectedClass,
           score: parseFloat(box.detectedScore).toFixed(2),
           min: `(${(bbox[0]/aRatio).toFixed(2)},${(bbox[1]/aRatio).toFixed(2)})`,
           max: `(${(bbox[2]/aRatio).toFixed(2)},${(bbox[3]/aRatio).toFixed(2)})`
         })
 
-        this.ctx.fillStyle = 'rgba(255,255,255,0.2)';
-        this.ctx.strokeStyle = 'yellow';
-        this.ctx.fillRect(bbox[1] * (width / aRatio), bbox[0] * (height / aRatio), width / aRatio * (bbox[3] - bbox[1]),
+        ctx.fillStyle = 'rgba(255,255,255,0.2)';
+        ctx.strokeStyle = 'yellow';
+        ctx.fillRect(bbox[1] * (width / aRatio), bbox[0] * (height / aRatio), width / aRatio * (bbox[3] - bbox[1]),
         height / aRatio * (bbox[2] - bbox[0]));
-        this.ctx.font = '20px Arial';
-        this.ctx.fillStyle = 'black';
-        this.ctx.fillText(`${box.detectedClass}: ${box.detectedScore}`, +parseFloat((bbox[1] * width).toString()).toFixed(2), +parseFloat((bbox[0] * height).toString()).toFixed(2), +parseFloat((bbox[0] * height).toString()).toFixed(2));
-        this.ctx.lineWidth = 2;
-        this.ctx.strokeRect(+parseFloat((bbox[1] * width).toString()).toFixed(2), +parseFloat((bbox[0] * height).toString()).toFixed(2), +parseFloat((width * (bbox[3] - bbox[1])).toString()).toFixed(2), +parseFloat((height * (bbox[2] - bbox[0])).toString()).toFixed(2));
+        ctx.font = '20px Arial';
+        ctx.fillStyle = 'black';
+        ctx.fillText(`${box.detectedClass}: ${box.detectedScore}`, +parseFloat((bbox[1] * width).toString()).toFixed(2), +parseFloat((bbox[0] * height).toString()).toFixed(2), +parseFloat((bbox[0] * height).toString()).toFixed(2));
+        ctx.lineWidth = 2;
+        ctx.strokeRect(+parseFloat((bbox[1] * width).toString()).toFixed(2), +parseFloat((bbox[0] * height).toString()).toFixed(2), +parseFloat((width * (bbox[3] - bbox[1])).toString()).toFixed(2), +parseFloat((height * (bbox[2] - bbox[0])).toString()).toFixed(2));
       })
+      image.dataSource = dataSource;
     });
-    img.src = `/static/images/image-old.png?${new Date().getTime()}`;
+    img.src = `${image.name}?${new Date().getTime()}`;
+
   }
   drawBBox() {
     console.log('choose a file')
@@ -220,12 +272,12 @@ export class AppComponent implements OnInit, AfterViewInit {
     return this.nextWebcam.asObservable();
   }
   onSubmit(f: NgForm) {
-    const allowedFiles = [".png", ".jpg", ".gif"];
+    const allowedFiles = [".png", ".jpg", ".gif", ".mp4", ".avi", ".webm"];
     const regex = new RegExp("([a-zA-Z0-9\s_\\.\-:])+(" + allowedFiles.join('|') + ")$");
     if(this.selectedFile && this.selectedFile.name && regex.test(this.selectedFile.name.toLowerCase())) {
       this.uploadPhoto(this.selectedFile);
     } else {
-      this.showMessage('Supported files are: jpg, png, gif, try again.');
+      this.showMessage('Supported files are: jpg, png, gif, mp4, avi try again.');
     }
   }
   uploadPhoto(imageFile: any) {
@@ -235,7 +287,8 @@ export class AppComponent implements OnInit, AfterViewInit {
     this.http.post<any>('/upload', formData)
     .subscribe((res) => {
       console.log(res)
-      this.uploaded = " - Uploaded!";
+      this.showMessage(`${imageFile.name} uploaded successfully.`)
+      // this.uploaded = " - Uploaded!";
       this.resetTimer();
     }, (err) => {
       console.log(err);
@@ -245,7 +298,7 @@ export class AppComponent implements OnInit, AfterViewInit {
   }
   setInterval(ms: number) {
     this.timer = setInterval(async () => {
-      this.loadJson('/static/js/image.json');
+      this.loadJson(`/static/js/${this.assetType.toLowerCase()}.json`);
     }, ms);
   }
   resetTimer() {

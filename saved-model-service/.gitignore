@@ -37,6 +37,7 @@ testem.log
 /typings
 _timestamp.json
 .history/
+certs/
 
 # e2e
 /e2e/*.js

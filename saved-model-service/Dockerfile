@@ -1,6 +1,6 @@
 FROM node:16.3.0
 
-RUN apt update -y && apt install fswebcam -y
+RUN apt update -y && apt install fswebcam ffmpeg -y
 
 WORKDIR /server
 

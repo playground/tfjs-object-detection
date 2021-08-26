@@ -11,7 +11,7 @@
   display: table-cell;
   width: 99%;
   margin-left: -28px;
-  margin-top: -28px;
+  margin-top: -12px;
 }
 
 .button_spacer {
@@ -107,7 +107,6 @@ p {
 .content {
   display: flex;
   margin: 82px auto 32px;
-  padding: 0 16px;
   max-width: 960px;
   flex-direction: column;
 }
@@ -134,4 +133,29 @@ a:hover {
 
 a:hover {
   color: #125699;
+}
+
+.hzn-form-field-select{
+  width: 80px;
+  height: 20px;
+  font-size: 10px;
+}
+
+.hzn-label {
+  font-size: 10px;
+}
+
+.hzn-card-content {
+  margin-top: 3px;
+}
+
+.hzn-mat-select {
+  height: 0.8vh !important;
+}
+
+.hzn-social {
+  width: 33px;
+  height: 33px !important;
+  margin: 0px 0px !important;
+  padding-right: 8px;
 }

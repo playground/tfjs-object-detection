@@ -1,6 +1,7 @@
 const fileUpload = require('express-fileupload');
 const express = require("express");
 const path = require('path');
+const $score = require('./index').$score;
 
 module.exports = () => {
   const app = express();
@@ -27,23 +28,37 @@ module.exports = () => {
     res.send({status: true, message: `Camera ${process.env.npm_config_cameraOn ? 'On' : 'Off'}`});
   });
 
+  app.get("/score", (req, res) => {
+    $score.next({name: 'score', score: req.query.score, assetType: req.query.assetType});
+    res.send({status: true, message: `Score: ${req.query.score}`});
+  });
+
   app.post('/upload', function(req, res) {
     try {
       if (!req.files || Object.keys(req.files).length === 0) {
         return res.status(400).send('No files were uploaded.');
       } else {
-        // The name of the input field (i.e. "sampleFile") is used to retrieve the uploaded file
         let imageFile = req.files.imageFile;
-        let uploadPath = __dirname + `/public/images/image.png`;
-    
-        // Use the mv() method to place the file somewhere on your server
-        imageFile.mv(uploadPath, function(err) {
-          if (err)
-            return res.status(500).send(err);
-    
-          res.send({status: true, message: 'File uploaded!'});
-        });
-    
+        const mimetype = imageFile ? imageFile.mimetype : '';
+        if(mimetype.indexOf('image/') >= 0 || mimetype.indexOf('video/') >= 0) {
+          // The name of the input field (i.e. "sampleFile") is used to retrieve the uploaded file
+          console.log('type: ', imageFile, imageFile.mimetype)
+          let uploadPath = __dirname + `/public/images/image.png`;
+          if(mimetype.indexOf('video/') >= 0) {
+            let ext = imageFile.name.match(/\.([^.]*?)$/);
+            uploadPath = __dirname + `/public/video/video${ext[0]}`;
+          }
+          
+          // Use the mv() method to place the file somewhere on your server
+          imageFile.mv(uploadPath, function(err) {
+            if (err)
+              return res.status(500).send(err);
+      
+            res.send({status: true, message: 'File uploaded!'});
+          });
+        } else {
+          res.send({status: true, message: 'Only image and video files are accepted.'});
+        }
       }  
     } catch(err) {
       res.status(500).send(err);
