@@ -54,6 +54,8 @@ export class AppComponent implements OnInit, AfterViewInit {
   assetType = 'Image';
   images: any[] = [];
   platform: string = '';
+  isCameraDisabled: boolean;
+  isServerCameraDisabled: boolean = true;
 
   constructor(
     private http: HttpClient,
@@ -61,6 +63,7 @@ export class AppComponent implements OnInit, AfterViewInit {
     private elementRef: ElementRef
   ){}
   ngOnInit(): void {
+    this.isCameraDisabled = location.hostname.indexOf('localhost') < 0 && location.protocol !== 'https';
     // WebcamUtil.getAvailableVideoInputs()
     //   .then((mediaDevices: MediaDeviceInfo[]) => {
     //     // this.multipleWebcamsAvailable = mediaDevices && mediaDevices.length > 1;
@@ -119,6 +122,7 @@ export class AppComponent implements OnInit, AfterViewInit {
         console.log(data)
         this.prevJson = data;
         this.cutoff = ''+this.prevJson.confidentCutoff;
+        this.isServerCameraDisabled = this.prevJson.cameraDisabled;
         this.drawComponent();
       }
     });

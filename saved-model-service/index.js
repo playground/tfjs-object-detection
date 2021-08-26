@@ -34,6 +34,7 @@ let timer;
 const intervalMS = 10000;
 let count = 0;
 let videoFormat = ['.mp4', '.avi', '.webm'];
+let cameraDisabled = true;
 let confidentCutoff = 0.85;
 const $score = new Subject().asObservable().subscribe((data) => {
   if(data.name == 'score') {
@@ -109,7 +110,7 @@ let ieam = {
         .subscribe((json) => {
           let images = {};
           images['/static/images/image-old.png'] = json;
-          json = Object.assign({images: images, version: version, confidentCutoff: confidentCutoff, platform: `${process.platform}:${process.arch}`});
+          json = Object.assign({images: images, version: version, confidentCutoff: confidentCutoff, platform: `${process.platform}:${process.arch}`, cameraDisabled: cameraDisabled});
           jsonfile.writeFile(`${staticPath}/image.json`, json, {spaces: 2});
           ieam.renameFile(imageFile, `${imagePath}/image-old.png`);
           ieam.soundEffect(mp3s.theForce);  
@@ -170,7 +171,7 @@ let ieam = {
       .subscribe({
         next: (value) => {
           console.log(value);
-          let json = Object.assign({}, {images: value, version: version, confidentCutoff: confidentCutoff, platform: `${process.platform}:${process.arch}`});
+          let json = Object.assign({}, {images: value, version: version, confidentCutoff: confidentCutoff, platform: `${process.platform}:${process.arch}`, cameraDisabled: cameraDisabled});
           jsonfile.writeFile(`${staticPath}/video.json`, json, {spaces: 2});
           ieam.soundEffect(mp3s.theForce);  
         },
@@ -484,6 +485,7 @@ let ieam = {
     }, ms);
   },
   initialInference: () => {
+    cameraDisabled = process.platform !== 'darwin' && !existsSync('/dev/video0');
     if(!existsSync(currentModelPath)) {
       mkdirSync(currentModelPath);
     }
