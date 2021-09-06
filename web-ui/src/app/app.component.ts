@@ -59,6 +59,7 @@ export class AppComponent implements OnInit, AfterViewInit {
     {name: 'cam3'}
   ];
   selectedCam = '';
+  previousSelectedCam = '';
   assetType = 'Image';
   images: any[] = [];
   platform: string = '';
@@ -75,9 +76,9 @@ export class AppComponent implements OnInit, AfterViewInit {
   ){}
   ngOnInit(): void {
     this.isCameraDisabled = location.hostname.indexOf('localhost') < 0 && location.protocol !== 'https';
-    this.selectedCam = this.host = location.href;
+    this.previousSelectedCam = this.selectedCam = this.host = location.href.replace(/\/$/, "");
     this.cameras.forEach((cam:any, i:number) => {
-      cam.url = i == 0 ? location.href : this.cameras[0] != 'https://intrench1.fyre.ibm.com/' ? 'https://intrench1.fyre.ibm.com/' : '';
+      cam.url = i == 0 ? this.host : 'https://intrench1.fyre.ibm.com';
     })
     // WebcamUtil.getAvailableVideoInputs()
     //   .then((mediaDevices: MediaDeviceInfo[]) => {
@@ -115,7 +116,7 @@ export class AppComponent implements OnInit, AfterViewInit {
   onScoreChange(evt: any) {
     if(evt.isUserInput) {
       console.log(evt)
-      this.http.get(`${this.host}score?score=${evt.source.value}&assetType=${this.assetType}`)
+      this.http.get(`${this.host}/score?score=${evt.source.value}&assetType=${this.assetType}`)
       .subscribe((data) => {
         console.log('json', data)
       });
@@ -125,7 +126,7 @@ export class AppComponent implements OnInit, AfterViewInit {
     if(evt.isUserInput) {
       console.log(evt)
       this.assetType = evt.source.value;
-      this.loadJson(`${this.host}static/js/${this.assetType.toLowerCase()}.json`);
+      this.loadJson(`${this.host}/static/js/${this.assetType.toLowerCase()}.json`);
       this.resetTimer();
     }
   }
@@ -211,7 +212,7 @@ export class AppComponent implements OnInit, AfterViewInit {
       })
       image.dataSource = dataSource;
     });
-    img.src = `${image.name}?${new Date().getTime()}`;
+    img.src = `${this.host}${image.name}?${new Date().getTime()}`;
 
   }
   drawBBox() {
@@ -232,7 +233,7 @@ export class AppComponent implements OnInit, AfterViewInit {
     console.log('camera')
     clearInterval(this.timer);
     this.camera.nativeElement.innerHTML = state ? 'camera' : 'camera_alt';
-    this.http.get(`${this.host}camera?on=${state}`)
+    this.http.get(`${this.host}/camera?on=${state}`)
     .subscribe((data) => {
       this.resetTimer();
       console.log('json', data)
@@ -313,7 +314,7 @@ export class AppComponent implements OnInit, AfterViewInit {
   }
   setInterval(ms: number) {
     this.timer = setInterval(async () => {
-      this.loadJson(`${this.host}static/js/${this.assetType.toLowerCase()}.json`);
+      this.loadJson(`${this.host}/static/js/${this.assetType.toLowerCase()}.json`);
     }, ms);
   }
   resetTimer() {
@@ -340,14 +341,18 @@ export class AppComponent implements OnInit, AfterViewInit {
   jumpTo(evt: any) {
     if(evt.isUserInput) {
       console.log(evt)
-      this.showDialog(evt.source.value);
+      this.showDialog(evt);
+    } else {
+      this.previousSelectedCam = evt.source.value;
     }
   }
-  showDialog(path: string) {
+  showDialog(evt: any) {
+    let path = evt.source.value;
     this.openDialog({title: `Specify absolute device url`, type: 'input', placeholder: 'Device url', path: path}, (resp: any) => {
       if (resp) {
+        resp.path = resp.path.replace(/\/$/, "");
         console.log(resp);
-        this.http.get(`${resp.path}static/js/${this.assetType.toLowerCase()}.json`)
+        this.http.get(`${resp.path}/static/js/${this.assetType.toLowerCase()}.json`)
         .subscribe({
           next: (res) => {
             console.log(res)
@@ -355,12 +360,22 @@ export class AppComponent implements OnInit, AfterViewInit {
           error: (err) => {
             console.log(err)
             this.showMessage(`${resp.path} is not a valid url`);
-            this.showDialog(path);
+            this.showDialog(evt);
           },
           complete: () => {
-            this.selectedCam = path;
+            this.cameras.forEach((cam) => {
+              if(cam.name == evt.source._mostRecentViewValue) {
+                cam.url = resp.path;
+                this.host = cam.url;
+                this.selectedCam = cam.url;
+                this.loadJson(`${this.host}/static/js/${this.assetType.toLowerCase()}.json`);
+                this.resetTimer();
+              }
+            })
           }
         });
+      } else {
+        this.selectedCam = this.previousSelectedCam;
       }
     });
 
