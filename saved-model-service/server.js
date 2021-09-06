@@ -2,10 +2,14 @@ const fileUpload = require('express-fileupload');
 const express = require("express");
 const path = require('path');
 const $score = require('./index').$score;
+const cors = require('cors');
 
 module.exports = () => {
   const app = express();
 
+  app.use(cors({
+    origin: '*'
+  }));
   app.use(fileUpload());
 
   app.use('/static', express.static('public'));

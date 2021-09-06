@@ -1,0 +1,17 @@
+.mat-dialog-title {
+  font-size: 12pt;
+}
+
+.mat-dialog-content {
+  overflow: unset
+}
+
+::ng-deep div.mat-radio-label-content {
+  padding-right: 15px;
+}
+
+::ng-deep .full-width {
+  mat-form-field {
+    width: 100%;
+  }
+}
