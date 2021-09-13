@@ -17,14 +17,11 @@ let build = {
       exec(arg, {maxBuffer: 1024 * 2000}, (err, stdout, stderr) => {
         if(!err) {
           let arch = stdout.replace(/\r?\n|\r/g, '');
-          arg = `docker build -t ${userName}/${imageName}:${version} -f Dockerfile-${arch} .`;
+          arg = `docker build -t ${userName}/${imageName}_${arch}:${version} -f Dockerfile-${arch} .`;
           exec(arg, {maxBuffer: 1024 * 2000}, (err, stdout, stderr) => {
             if(!err) {
               console.log(stdout)
               console.log(`done building image ${imageName}`);
-              if(composer) {
-                build.createBetaComposer();
-              }
             } else {
               console.log(`failed to build image ${imageName}`, err);
             }
@@ -45,7 +42,7 @@ let build = {
       exec(arg, {maxBuffer: 1024 * 2000}, (err, stdout, stderr) => {
         if(!err) {
           let arch = stdout.replace(/\r?\n|\r/g, '');
-          arg = `docker push ${userName}/${imageName}:${version}`;
+          arg = `docker push ${userName}/${imageName}_${arch}:${version}`;
           exec(arg, {maxBuffer: 1024 * 2000}, (err, stdout, stderr) => {
             if(!err) {
               console.log(stdout)
