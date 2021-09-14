@@ -4,23 +4,33 @@
       "bbox": [
         {
           "detectedBox": [
-            "0.03",
-            "0.33",
-            "0.21",
-            "0.54"
+            "0.00",
+            "0.16",
+            "0.23",
+            "0.36"
           ],
           "detectedClass": "hard-hat",
           "detectedScore": "1.00"
+        },
+        {
+          "detectedBox": [
+            "0.30",
+            "0.45",
+            "0.56",
+            "0.63"
+          ],
+          "detectedClass": "hard-hat",
+          "detectedScore": "0.99"
         }
       ],
-      "elapsedTime": 316.0705580711365
+      "elapsedTime": 243.38985300064087
     }
   },
   "version": {
     "name": "Demo model",
     "version": "1.0.0"
   },
-  "confidentCutoff": "0.95",
+  "confidentCutoff": 0.85,
   "platform": "darwin:x64",
   "cameraDisabled": false
 }
