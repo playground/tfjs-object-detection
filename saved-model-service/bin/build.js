@@ -7,12 +7,12 @@ const fs = require('fs');
 const task = process.env.npm_config_task;
 const userName = process.env.npm_config_username;
 const imageName = process.env.npm_config_imagename;
-const version = process.env.npm_config_version || '1.0.0';
+const version = process.env.npm_config_imageversion;
 
 
 let build = {
   dockerImage: () => {
-    if(userName && imageName) {
+    if(userName && imageName && version) {
       let arg = `hzn architecture`
       exec(arg, {maxBuffer: 1024 * 2000}, (err, stdout, stderr) => {
         if(!err) {
@@ -32,12 +32,12 @@ let build = {
         }
       });  
     } else {
-      console.log('docker username and imagename are required...');
+      console.log('docker username, imagename and imageversion are required...');
       process.exit(0);
     }
   },
   pushImage: () => {
-    if(userName && imageName) {
+    if(userName && imageName && version) {
       let arg = `hzn architecture`
       exec(arg, {maxBuffer: 1024 * 2000}, (err, stdout, stderr) => {
         if(!err) {
@@ -60,7 +60,7 @@ let build = {
         }
       });  
     } else {
-      console.log('docker username and imagename are required...');
+      console.log('docker username, imagename and imageversion are required...');
       process.exit(0);
     }
   },
