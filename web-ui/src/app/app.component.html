@@ -72,10 +72,12 @@
             </mat-form-field>
             <mat-form-field appearance="outline" class="hzn-form-field-select">
               <mat-label class="hzn-label">Camera</mat-label>
-              <mat-select [(value)]="selectedCam" class="hzn-mat-select">
+              <mat-select [(value)]="selectedCam" class="hzn-mat-select" [disabled]="!camerasOn">
                 <mat-option *ngFor="let camera of cameras" [value]="camera.url" (onSelectionChange)="jumpTo($event)">{{ camera.name }}</mat-option>
               </mat-select>
             </mat-form-field>
+            <mat-checkbox class="camera-checkbox-margin" [(ngModel)]="camerasOn" (change)="enableRemoteCameras($event)">
+            </mat-checkbox>
           </span>
         </mat-card-subtitle>
       </div>

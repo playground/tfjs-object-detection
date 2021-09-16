@@ -4,26 +4,26 @@
       "bbox": [
         {
           "detectedBox": [
-            "0.00",
-            "0.16",
-            "0.23",
-            "0.36"
+            "0.14",
+            "0.21",
+            "0.28",
+            "0.35"
           ],
           "detectedClass": "hard-hat",
           "detectedScore": "1.00"
         },
         {
           "detectedBox": [
-            "0.30",
-            "0.45",
-            "0.56",
-            "0.63"
+            "0.28",
+            "0.73",
+            "0.43",
+            "0.88"
           ],
           "detectedClass": "hard-hat",
-          "detectedScore": "0.99"
+          "detectedScore": "0.98"
         }
       ],
-      "elapsedTime": 243.38985300064087
+      "elapsedTime": 235.7961739897728
     }
   },
   "version": {
@@ -32,5 +32,6 @@
   },
   "confidentCutoff": 0.85,
   "platform": "darwin:x64",
-  "cameraDisabled": false
+  "cameraDisabled": false,
+  "remoteCamerasOn": "true"
 }

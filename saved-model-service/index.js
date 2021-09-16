@@ -58,6 +58,7 @@ const state = {
   sockets: [],
 };
 process.env.npm_config_cameraOn = false;
+process.env.npm_config_remoteCamerasOn = false;
 
 console.log('platform ', process.platform, process.arch)
 
@@ -113,7 +114,7 @@ let ieam = {
           .subscribe((json) => {
             let images = {};
             images['/static/images/image-old.png'] = json;
-            json = Object.assign({images: images, version: version, confidentCutoff: confidentCutoff, platform: `${process.platform}:${process.arch}`, cameraDisabled: cameraDisabled});
+            json = Object.assign({images: images, version: version, confidentCutoff: confidentCutoff, platform: `${process.platform}:${process.arch}`, cameraDisabled: cameraDisabled, remoteCamerasOn: process.env.npm_config_remoteCamerasOn});
             jsonfile.writeFile(`${staticPath}/image.json`, json, {spaces: 2});
             ieam.renameFile(imageFile, `${imagePath}/image-old.png`);
             ieam.soundEffect(mp3s.theForce);  
@@ -123,7 +124,11 @@ let ieam = {
           console.log(e);
           unlinkSync(imageFile);
         }
-      } else if(++cycles >= 3) {
+      } else if((process.env.npm_config_remoteCamerasOn === true || process.env.npm_config_remoteCamerasOn === 'true') && ++cycles >= 3) {
+        console.log('is ' + process.env.npm_config_remoteCamerasOn)
+        if(Date.now() - process.env.npm_config_lastinteractive > 120000) {
+          process.env.npm_config_remoteCamerasOn = false;
+        }
         const random = Math.floor(Math.random() * 10);
         imageFile = `${imagePath}/dataset/image${random}.jpg`;
         copyFileSync(imageFile, `${imagePath}/image.jpg`)

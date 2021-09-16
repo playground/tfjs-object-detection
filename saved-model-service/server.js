@@ -15,6 +15,7 @@ module.exports = () => {
   app.use('/static', express.static('public'));
 
   app.get('/',(req,res,next) => { //here just add next parameter
+    setInteractive();
     res.sendFile(
       path.resolve( __dirname, "index.html" )
     )
@@ -27,18 +28,28 @@ module.exports = () => {
 
   process.env.npm_config_cameraOn = false;
   app.get("/camera", (req, res) => {
+    setInteractive();
     console.log(req.query.on)
-    process.env.npm_config_cameraOn = req.query.on;
+    process.env.npm_config_cameraOn = req.query.on === 'true';
     res.send({status: true, message: `Camera ${process.env.npm_config_cameraOn ? 'On' : 'Off'}`});
   });
 
+  app.get("/remote-cameras-on", (req, res) => {
+    setInteractive();
+    console.log(req.query.on)
+    process.env.npm_config_remoteCamerasOn = req.query.on === 'true';
+    res.send({status: true, message: `Remote Cameras ${process.env.npm_config_remoteCamerasOn ? 'On' : 'Off'}`});
+  });
+
   app.get("/score", (req, res) => {
+    setInteractive();
     $score.next({name: 'score', score: req.query.score, assetType: req.query.assetType});
     res.send({status: true, message: `Score: ${req.query.score}`});
   });
 
   app.post('/upload', function(req, res) {
     try {
+      setInteractive();
       if (!req.files || Object.keys(req.files).length === 0) {
         return res.status(400).send('No files were uploaded.');
       } else {
@@ -75,5 +86,8 @@ module.exports = () => {
     )
   });
 
+  setInteractive = () => {
+    process.env.npm_config_lastinteractive = Date.now();
+  }
   return app;
 }

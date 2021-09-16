@@ -59,6 +59,7 @@ export class AppComponent implements OnInit, AfterViewInit {
     {name: 'cam3'}
   ];
   selectedCam = '';
+  camerasOn = false;
   previousSelectedCam = '';
   assetType = 'Image';
   images: any[] = [];
@@ -78,7 +79,7 @@ export class AppComponent implements OnInit, AfterViewInit {
     this.isCameraDisabled = location.hostname.indexOf('localhost') < 0 && location.protocol !== 'https';
     this.previousSelectedCam = this.selectedCam = this.host = location.href.replace(/\/$/, "");
     this.cameras.forEach((cam:any, i:number) => {
-      cam.url = i == 0 ? this.host : 'https://intrench1.fyre.ibm.com';
+      cam.url = i == 0 ? this.host : 'http://intrench1.fyre.ibm.com';
     })
     // WebcamUtil.getAvailableVideoInputs()
     //   .then((mediaDevices: MediaDeviceInfo[]) => {
@@ -136,10 +137,13 @@ export class AppComponent implements OnInit, AfterViewInit {
       console.log('json', data)
       if(JSON.stringify(data) !== JSON.stringify(this.prevJson)) {
         console.log(data)
-        this.prevJson = data;
-        this.cutoff = ''+this.prevJson.confidentCutoff;
-        this.isServerCameraDisabled = this.prevJson.cameraDisabled;
-        this.drawComponent();
+        if(data) {
+          this.prevJson = data;
+          this.cutoff = ''+this.prevJson.confidentCutoff;
+          this.isServerCameraDisabled = this.prevJson.cameraDisabled === 'true' || this.prevJson.cameraDisabled === true;
+          this.camerasOn = this.prevJson.remoteCamerasOn === 'true' || this.prevJson.remoteCamerasOn === true;
+          this.drawComponent();
+        }
       }
     });
   }
@@ -342,6 +346,7 @@ export class AppComponent implements OnInit, AfterViewInit {
     if(evt.isUserInput) {
       console.log(evt)
       this.showDialog(evt);
+      this.toggleRemoteCamera(true);
     } else {
       this.previousSelectedCam = evt.source.value;
     }
@@ -379,6 +384,17 @@ export class AppComponent implements OnInit, AfterViewInit {
       }
     });
 
+  }
+  enableRemoteCameras(evt: any) {
+    console.log(evt);
+    this.toggleRemoteCamera(evt.checked);
+  }
+  toggleRemoteCamera(toggle: boolean) {
+    this.http.get(`${this.host}/remote-cameras-on?on=${toggle}`)
+    .subscribe((data) => {
+      console.log('json', data)
+      this.showMessage(`Turn remote cameras: ${toggle ? 'on' : 'off'}`);
+    });
   }
   ngOnDestroy() {
     delete this.dialogRef;
