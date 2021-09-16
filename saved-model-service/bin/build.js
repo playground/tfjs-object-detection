@@ -47,9 +47,6 @@ let build = {
             if(!err) {
               console.log(stdout)
               console.log(`done publishing image ${imageName}`);
-              if(composer) {
-                build.createBetaComposer();
-              }
             } else {
               console.log(`failed to publish image ${imageName}`, err);
             }
