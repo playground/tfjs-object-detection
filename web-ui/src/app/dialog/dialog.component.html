@@ -1,0 +1,19 @@
+<h1 mat-dialog-title>{{data.title}}</h1>
+<div mat-dialog-content>
+  <div [ngSwitch]="data.type">
+    <div *ngSwitchCase="'input'" class="full-width">
+      <!-- <mat-radio-group [(ngModel)]="data.path">
+          <mat-radio-button checked value="relative">Relative path</mat-radio-button>
+          <mat-radio-button value="absolute">Absolute</mat-radio-button>
+      </mat-radio-group> -->
+      <mat-form-field>
+        <input matInput placeholder="{{data.placeholder}}" (ngModelChange)="isOK($event)"
+        name="name" [(ngModel)]="data.path"
+        >
+      </mat-form-field>
+    </div>
+</div>
+<div mat-dialog-actions>
+  <button mat-raised-button (click)="onNoClick()">Cancel</button>
+  <button mat-raised-button (click)="ok()" [disabled]="notOK" cdkFocusInitial>Ok</button>
+</div>

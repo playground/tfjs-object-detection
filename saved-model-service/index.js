@@ -32,6 +32,7 @@ const oldImage = `${imagePath}/image-old.png`;
 let sharedPath = '';
 let timer;
 const intervalMS = 10000;
+let cycles = 0;
 let count = 0;
 let videoFormat = ['.mp4', '.avi', '.webm'];
 let cameraDisabled = true;
@@ -57,6 +58,7 @@ const state = {
   sockets: [],
 };
 process.env.npm_config_cameraOn = false;
+process.env.npm_config_remoteCamerasOn = false;
 
 console.log('platform ', process.platform, process.arch)
 
@@ -92,35 +94,48 @@ let ieam = {
     return new Promise(resolve => setTimeout(resolve, ms));
   },
   checkImage: async () => {
-    if(process.env.npm_config_cameraOn == 'true' && ieam.doCapture) {
-      console.log('pause ', Boolean(process.env.npm_config_cameraOn), process.env.npm_config_cameraOn)
-      ieam.capture();
-    }
-    let imageFile = `${imagePath}/image.png`;
-    if(!existsSync(imageFile)) {
-      imageFile = `${imagePath}/image.jpg`;
-    }
-    if(existsSync(imageFile)) {
-      try {
-        console.log(imageFile)
-        const image = readFileSync(imageFile);
-        const decodedImage = tfnode.node.decodeImage(new Uint8Array(image), 3);
-        const inputTensor = decodedImage.expandDims(0);
-        ieam.inference(inputTensor)
-        .subscribe((json) => {
-          let images = {};
-          images['/static/images/image-old.png'] = json;
-          json = Object.assign({images: images, version: version, confidentCutoff: confidentCutoff, platform: `${process.platform}:${process.arch}`, cameraDisabled: cameraDisabled});
-          jsonfile.writeFile(`${staticPath}/image.json`, json, {spaces: 2});
-          ieam.renameFile(imageFile, `${imagePath}/image-old.png`);
-          ieam.soundEffect(mp3s.theForce);  
-          ieam.doCapture = true;  
-        });
-      } catch(e) {
-        console.log(e);
-        unlinkSync(imageFile);
+    try {
+      if(process.env.npm_config_cameraOn == 'true' && ieam.doCapture) {
+        console.log('pause ', Boolean(process.env.npm_config_cameraOn), process.env.npm_config_cameraOn)
+        ieam.capture();
       }
-    }  
+      let imageFile = `${imagePath}/image.png`;
+      if(!existsSync(imageFile)) {
+        imageFile = `${imagePath}/image.jpg`;
+      }
+      if(existsSync(imageFile)) {
+        try {
+          cycles = 0;
+          console.log(imageFile)
+          const image = readFileSync(imageFile);
+          const decodedImage = tfnode.node.decodeImage(new Uint8Array(image), 3);
+          const inputTensor = decodedImage.expandDims(0);
+          ieam.inference(inputTensor)
+          .subscribe((json) => {
+            let images = {};
+            images['/static/images/image-old.png'] = json;
+            json = Object.assign({images: images, version: version, confidentCutoff: confidentCutoff, platform: `${process.platform}:${process.arch}`, cameraDisabled: cameraDisabled, remoteCamerasOn: process.env.npm_config_remoteCamerasOn});
+            jsonfile.writeFile(`${staticPath}/image.json`, json, {spaces: 2});
+            ieam.renameFile(imageFile, `${imagePath}/image-old.png`);
+            ieam.soundEffect(mp3s.theForce);  
+            ieam.doCapture = true;  
+          });
+        } catch(e) {
+          console.log(e);
+          unlinkSync(imageFile);
+        }
+      } else if((process.env.npm_config_remoteCamerasOn === true || process.env.npm_config_remoteCamerasOn === 'true') && ++cycles >= 3) {
+        console.log('is ' + process.env.npm_config_remoteCamerasOn)
+        if(Date.now() - process.env.npm_config_lastinteractive > 120000) {
+          process.env.npm_config_remoteCamerasOn = false;
+        }
+        const random = Math.floor(Math.random() * 10);
+        imageFile = `${imagePath}/dataset/image${random}.jpg`;
+        copyFileSync(imageFile, `${imagePath}/image.jpg`)
+      }  
+    } catch(e) {
+      console.log(e);
+    }
   },  
   inference: (inputTensor) => {
     return new Observable((observer) => {

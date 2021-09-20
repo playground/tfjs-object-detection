@@ -3,7 +3,9 @@ import { NgForm } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { MatSnackBar, MatSnackBarHorizontalPosition, MatSnackBarVerticalPosition, MatSnackBarConfig } from '@angular/material/snack-bar';
 import {WebcamImage, WebcamInitError, WebcamUtil} from 'ngx-webcam';
-import {Subject, Observable} from 'rxjs';
+import { Subject, Observable } from 'rxjs';
+import { MatDialog } from '@angular/material/dialog';
+import { DialogComponent } from './dialog/dialog.component';
 
 export interface BboxElement {
   label: string;
@@ -51,19 +53,34 @@ export class AppComponent implements OnInit, AfterViewInit {
   scores: string[] = ['0.95', '0.90', '0.85', '0.80', '0.75', '0.70', '0.65', '0.60', '0.55', '0.50', '0.45', '0.40', '0.35', '0.30', '0.25', '0.20', '0.15', '0.10'];
   cutoff: string;
   assetTypes: string[] = ['Image', 'Video'];
+  cameras: any[] = [
+    {name: 'cam1'},
+    {name: 'cam2'},
+    {name: 'cam3'}
+  ];
+  selectedCam = '';
+  camerasOn = false;
+  previousSelectedCam = '';
   assetType = 'Image';
   images: any[] = [];
   platform: string = '';
   isCameraDisabled: boolean;
   isServerCameraDisabled: boolean = true;
+  dialogRef: any;
+  host: string;
 
   constructor(
     private http: HttpClient,
     private snackBar: MatSnackBar,
+    private dialog: MatDialog,
     private elementRef: ElementRef
   ){}
   ngOnInit(): void {
     this.isCameraDisabled = location.hostname.indexOf('localhost') < 0 && location.protocol !== 'https';
+    this.previousSelectedCam = this.selectedCam = this.host = location.href.replace(/\/$/, "");
+    this.cameras.forEach((cam:any, i:number) => {
+      cam.url = i == 0 ? this.host : 'http://intrench1.fyre.ibm.com';
+    })
     // WebcamUtil.getAvailableVideoInputs()
     //   .then((mediaDevices: MediaDeviceInfo[]) => {
     //     // this.multipleWebcamsAvailable = mediaDevices && mediaDevices.length > 1;
@@ -100,7 +117,7 @@ export class AppComponent implements OnInit, AfterViewInit {
   onScoreChange(evt: any) {
     if(evt.isUserInput) {
       console.log(evt)
-      this.http.get(`/score?score=${evt.source.value}&assetType=${this.assetType}`)
+      this.http.get(`${this.host}/score?score=${evt.source.value}&assetType=${this.assetType}`)
       .subscribe((data) => {
         console.log('json', data)
       });
@@ -110,7 +127,7 @@ export class AppComponent implements OnInit, AfterViewInit {
     if(evt.isUserInput) {
       console.log(evt)
       this.assetType = evt.source.value;
-      this.loadJson(`/static/js/${this.assetType.toLowerCase()}.json`);
+      this.loadJson(`${this.host}/static/js/${this.assetType.toLowerCase()}.json`);
       this.resetTimer();
     }
   }
@@ -120,10 +137,13 @@ export class AppComponent implements OnInit, AfterViewInit {
       console.log('json', data)
       if(JSON.stringify(data) !== JSON.stringify(this.prevJson)) {
         console.log(data)
-        this.prevJson = data;
-        this.cutoff = ''+this.prevJson.confidentCutoff;
-        this.isServerCameraDisabled = this.prevJson.cameraDisabled;
-        this.drawComponent();
+        if(data) {
+          this.prevJson = data;
+          this.cutoff = ''+this.prevJson.confidentCutoff;
+          this.isServerCameraDisabled = this.prevJson.cameraDisabled === 'true' || this.prevJson.cameraDisabled === true;
+          this.camerasOn = this.prevJson.remoteCamerasOn === 'true' || this.prevJson.remoteCamerasOn === true;
+          this.drawComponent();
+        }
       }
     });
   }
@@ -196,7 +216,7 @@ export class AppComponent implements OnInit, AfterViewInit {
       })
       image.dataSource = dataSource;
     });
-    img.src = `${image.name}?${new Date().getTime()}`;
+    img.src = `${this.host}${image.name}?${new Date().getTime()}`;
 
   }
   drawBBox() {
@@ -217,7 +237,7 @@ export class AppComponent implements OnInit, AfterViewInit {
     console.log('camera')
     clearInterval(this.timer);
     this.camera.nativeElement.innerHTML = state ? 'camera' : 'camera_alt';
-    this.http.get(`/camera?on=${state}`)
+    this.http.get(`${this.host}/camera?on=${state}`)
     .subscribe((data) => {
       this.resetTimer();
       console.log('json', data)
@@ -298,7 +318,7 @@ export class AppComponent implements OnInit, AfterViewInit {
   }
   setInterval(ms: number) {
     this.timer = setInterval(async () => {
-      this.loadJson(`/static/js/${this.assetType.toLowerCase()}.json`);
+      this.loadJson(`${this.host}/static/js/${this.assetType.toLowerCase()}.json`);
     }, ms);
   }
   resetTimer() {
@@ -307,5 +327,76 @@ export class AppComponent implements OnInit, AfterViewInit {
   }
   chooseFile() {
     console.log('choose a file')
+  }
+  openDialog(payload:any, cb:any): void {
+    this.dialogRef = this.dialog.open(DialogComponent, {
+      hasBackdrop: true,
+      width: '300px',
+      height: '200px',
+      panelClass: 'custom-modalbox',
+      data: payload
+    });
+
+    this.dialogRef.afterClosed().subscribe((result: any) => {
+      this.dialog.closeAll();
+      cb(result);
+    });
+  }
+  jumpTo(evt: any) {
+    if(evt.isUserInput) {
+      console.log(evt)
+      this.showDialog(evt);
+      this.toggleRemoteCamera(true);
+    } else {
+      this.previousSelectedCam = evt.source.value;
+    }
+  }
+  showDialog(evt: any) {
+    let path = evt.source.value;
+    this.openDialog({title: `Specify absolute device url`, type: 'input', placeholder: 'Device url', path: path}, (resp: any) => {
+      if (resp) {
+        resp.path = resp.path.replace(/\/$/, "");
+        console.log(resp);
+        this.http.get(`${resp.path}/static/js/${this.assetType.toLowerCase()}.json`)
+        .subscribe({
+          next: (res) => {
+            console.log(res)
+          },
+          error: (err) => {
+            console.log(err)
+            this.showMessage(`${resp.path} is not a valid url`);
+            this.showDialog(evt);
+          },
+          complete: () => {
+            this.cameras.forEach((cam) => {
+              if(cam.name == evt.source._mostRecentViewValue) {
+                cam.url = resp.path;
+                this.host = cam.url;
+                this.selectedCam = cam.url;
+                this.loadJson(`${this.host}/static/js/${this.assetType.toLowerCase()}.json`);
+                this.resetTimer();
+              }
+            })
+          }
+        });
+      } else {
+        this.selectedCam = this.previousSelectedCam;
+      }
+    });
+
+  }
+  enableRemoteCameras(evt: any) {
+    console.log(evt);
+    this.toggleRemoteCamera(evt.checked);
+  }
+  toggleRemoteCamera(toggle: boolean) {
+    this.http.get(`${this.host}/remote-cameras-on?on=${toggle}`)
+    .subscribe((data) => {
+      console.log('json', data)
+      this.showMessage(`Turn remote cameras: ${toggle ? 'on' : 'off'}`);
+    });
+  }
+  ngOnDestroy() {
+    delete this.dialogRef;
   }
 }
