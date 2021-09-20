@@ -8,17 +8,31 @@ const task = process.env.npm_config_task;
 const userName = process.env.npm_config_username;
 const imageName = process.env.npm_config_imagename;
 const version = process.env.npm_config_imageversion;
+const hznConfig = process.env.npm_config_hznconfig;
+const org = process.env.npm_config_org || 'biz';
 
-
+console.log('current directory: ', process.cwd());
 let build = {
+  getConfig: () => {
+    if(fs.existsSync(hznConfig)) {
+      let hznJson = JSON.parse(fs.readFileSync(hznConfig).toString());
+      let envVars = hznJson[org]['envVars'];
+      userName = envVars.YOUR_DOCKERHUB_ID;
+      imageName = envVars.SERVICE_NAME;
+      version = envVars.SERVICE_VERSION;
+    }
+  },
   dockerImage: () => {
+    if(hznConfig) {
+      build.getConfig();
+    }
     if(userName && imageName && version) {
       let arg = `hzn architecture`
       exec(arg, {maxBuffer: 1024 * 2000}, (err, stdout, stderr) => {
         if(!err) {
           let arch = stdout.replace(/\r?\n|\r/g, '');
           arg = `docker build -t ${userName}/${imageName}_${arch}:${version} -f Dockerfile-${arch} .`;
-          exec(arg, {maxBuffer: 1024 * 2000}, (err, stdout, stderr) => {
+          exec(arg, {maxBuffer: 1024 * 3500}, (err, stdout, stderr) => {
             if(!err) {
               console.log(stdout)
               console.log(`done building image ${imageName}`);
@@ -37,13 +51,16 @@ let build = {
     }
   },
   pushImage: () => {
+    if(hznConfig) {
+      build.getConfig();
+    }
     if(userName && imageName && version) {
       let arg = `hzn architecture`
       exec(arg, {maxBuffer: 1024 * 2000}, (err, stdout, stderr) => {
         if(!err) {
           let arch = stdout.replace(/\r?\n|\r/g, '');
           arg = `docker push ${userName}/${imageName}_${arch}:${version}`;
-          exec(arg, {maxBuffer: 1024 * 2000}, (err, stdout, stderr) => {
+          exec(arg, {maxBuffer: 1024 * 3500}, (err, stdout, stderr) => {
             if(!err) {
               console.log(stdout)
               console.log(`done publishing image ${imageName}`);
