@@ -42,7 +42,6 @@ let build = {
           });
         } else {
           console.log('failed to identify arch', err);
-          observer.error(err);
         }
       });  
     } else {
@@ -70,7 +69,6 @@ let build = {
           });
         } else {
           console.log('failed to identify arch', err);
-          observer.error(err);
         }
       });  
     } else {
