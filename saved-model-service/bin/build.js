@@ -5,11 +5,11 @@ const cp = require('child_process'),
 const fs = require('fs');
 
 const task = process.env.npm_config_task;
-const userName = process.env.npm_config_username;
-const imageName = process.env.npm_config_imagename;
-const version = process.env.npm_config_imageversion;
+let userName = process.env.npm_config_username;
+let imageName = process.env.npm_config_imagename;
+let version = process.env.npm_config_imageversion;
 const hznConfig = process.env.npm_config_hznconfig;
-const org = process.env.npm_config_org || 'biz';
+let org = process.env.npm_config_org || 'biz';
 
 console.log('current directory: ', process.cwd());
 let build = {
