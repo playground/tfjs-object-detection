@@ -4,51 +4,56 @@
       "bbox": [
         {
           "detectedBox": [
-            "0.12",
-            "0.73",
-            "0.35",
-            "0.90"
+            "0.16",
+            "0.48",
+            "0.30",
+            "0.59"
           ],
           "detectedClass": "hard-hat",
-          "detectedScore": "1.00"
-        },
-        {
-          "detectedBox": [
-            "0.05",
-            "0.57",
-            "0.24",
-            "0.74"
-          ],
-          "detectedClass": "hard-hat",
-          "detectedScore": "1.00"
+          "detectedScore": "0.99"
         }
       ],
-      "elapsedTime": 412.37406301498413
+      "elapsedTime": 271.54298704862595
     },
     "/static/video/image_2.jpg": {
       "bbox": [
         {
           "detectedBox": [
-            "0.06",
-            "0.61",
-            "0.33",
-            "0.77"
+            "0.00",
+            "0.62",
+            "0.14",
+            "0.82"
           ],
           "detectedClass": "hard-hat",
-          "detectedScore": "1.00"
+          "detectedScore": "0.92"
         },
         {
           "detectedBox": [
-            "0.16",
-            "0.81",
-            "0.39",
-            "0.98"
+            "0.07",
+            "0.22",
+            "0.28",
+            "0.34"
           ],
           "detectedClass": "hard-hat",
-          "detectedScore": "1.00"
+          "detectedScore": "0.86"
         }
       ],
-      "elapsedTime": 304.9086170196533
+      "elapsedTime": 219.76652598381042
+    },
+    "/static/video/image_3.jpg": {
+      "bbox": [
+        {
+          "detectedBox": [
+            "0.03",
+            "0.19",
+            "0.27",
+            "0.34"
+          ],
+          "detectedClass": "hard-hat",
+          "detectedScore": "0.88"
+        }
+      ],
+      "elapsedTime": 239.5738030076027
     }
   },
   "version": {
@@ -56,5 +61,6 @@
     "version": "1.0.0"
   },
   "confidentCutoff": 0.85,
-  "platform": "darwin:x64"
+  "platform": "darwin:x64",
+  "cameraDisabled": false
 }

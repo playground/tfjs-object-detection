@@ -6,6 +6,7 @@ import {WebcamImage, WebcamInitError, WebcamUtil} from 'ngx-webcam';
 import { Subject, Observable } from 'rxjs';
 import { MatDialog } from '@angular/material/dialog';
 import { DialogComponent } from './dialog/dialog.component';
+import io from 'socket.io-client';
 
 export interface BboxElement {
   label: string;
@@ -69,13 +70,22 @@ export class AppComponent implements OnInit, AfterViewInit {
   isServerCameraDisabled: boolean = true;
   dialogRef: any;
   host: string;
+  socket: any;
 
   constructor(
     private http: HttpClient,
     private snackBar: MatSnackBar,
     private dialog: MatDialog,
     private elementRef: ElementRef
-  ){}
+  ){
+    this.socket = (io as any)(location.origin);
+    this.host = location.origin;
+    this.loadJson(`${this.host}/static/js/${this.assetType.toLowerCase()}.json`);
+    this.socket.on('update', (data: any) => {
+      console.log(data);
+      this.loadJson(`${this.host}/static/js/${this.assetType.toLowerCase()}.json`);
+    })
+  }
   ngOnInit(): void {
     this.isCameraDisabled = location.hostname.indexOf('localhost') < 0 && location.protocol !== 'https';
     this.previousSelectedCam = this.selectedCam = this.host = location.href.replace(/\/$/, "");
@@ -90,7 +100,6 @@ export class AppComponent implements OnInit, AfterViewInit {
   ngAfterViewInit(): void {
     this.getMatCardSize();
     // this.ctx = this.canvas.nativeElement.getContext('2d');
-    this.setInterval(this.intervalMS);
   }
   @HostListener('window:resize', ['$event'])
   onResize(event?:any) {
@@ -129,7 +138,6 @@ export class AppComponent implements OnInit, AfterViewInit {
       console.log(evt)
       this.assetType = evt.source.value;
       this.loadJson(`${this.host}/static/js/${this.assetType.toLowerCase()}.json`);
-      this.resetTimer();
     }
   }
   loadJson(file: any) {
@@ -240,7 +248,6 @@ export class AppComponent implements OnInit, AfterViewInit {
     this.camera.nativeElement.innerHTML = state ? 'camera' : 'camera_alt';
     this.http.get(`${this.host}/camera?on=${state}`)
     .subscribe((data) => {
-      this.resetTimer();
       console.log('json', data)
     });
   }
@@ -310,7 +317,6 @@ export class AppComponent implements OnInit, AfterViewInit {
       console.log(res)
       this.showMessage(`${imageFile.name} uploaded successfully.`)
       // this.uploaded = " - Uploaded!";
-      this.resetTimer();
     }, (err) => {
       console.log(err);
       this.uploaded = " - Upload failed!";
@@ -318,13 +324,13 @@ export class AppComponent implements OnInit, AfterViewInit {
 
   }
   setInterval(ms: number) {
-    this.timer = setInterval(async () => {
-      this.loadJson(`${this.host}/static/js/${this.assetType.toLowerCase()}.json`);
-    }, ms);
+    // this.timer = setInterval(async () => {
+    //   this.loadJson(`${this.host}/static/js/${this.assetType.toLowerCase()}.json`);
+    // }, ms);
   }
   resetTimer() {
-    clearInterval(this.timer);
-    this.setInterval(this.intervalMS);
+    // clearInterval(this.timer);
+    // this.setInterval(this.intervalMS);
   }
   chooseFile() {
     console.log('choose a file')
@@ -383,7 +389,6 @@ export class AppComponent implements OnInit, AfterViewInit {
                 this.host = cam.url;
                 this.selectedCam = cam.url;
                 this.loadJson(`${this.host}/static/js/${this.assetType.toLowerCase()}.json`);
-                this.resetTimer();
               }
             })
           }
@@ -399,7 +404,6 @@ export class AppComponent implements OnInit, AfterViewInit {
     this.toggleRemoteCamera(evt.checked);
   }
   toggleRemoteCamera(toggle: boolean) {
-    this.resetTimer();
     this.http.get(`${this.host}/remote-cameras-on?on=${toggle}`)
     .subscribe((data) => {
       console.log('json', data)
@@ -409,7 +413,6 @@ export class AppComponent implements OnInit, AfterViewInit {
          el.on = toggle;
         }
       })
-      this.resetTimer();
     });
   }
   ngOnDestroy() {

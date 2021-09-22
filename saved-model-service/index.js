@@ -8,6 +8,7 @@ const http = require('http');
 const cp = require('child_process'),
 exec = cp.exec;
 const player = require('play-sound')();
+const socketIO = require('socket.io');
 
 const path = require('path');
 const winston = require('winston');
@@ -52,6 +53,7 @@ const $score = new Subject().asObservable().subscribe((data) => {
 });
 
 module.exports.$score = $score;
+let io;
 
 const state = {
   server: null,
@@ -118,7 +120,8 @@ let ieam = {
             jsonfile.writeFile(`${staticPath}/image.json`, json, {spaces: 2});
             ieam.renameFile(imageFile, `${imagePath}/image-old.png`);
             ieam.soundEffect(mp3s.theForce);  
-            ieam.doCapture = true;  
+            ieam.doCapture = true;
+            io.emit('update', {image: 'captured'});  
           });
         } catch(e) {
           console.log(e);
@@ -189,6 +192,7 @@ let ieam = {
           let json = Object.assign({}, {images: value, version: version, confidentCutoff: confidentCutoff, platform: `${process.platform}:${process.arch}`, cameraDisabled: cameraDisabled});
           jsonfile.writeFile(`${staticPath}/video.json`, json, {spaces: 2});
           ieam.soundEffect(mp3s.theForce);  
+          io.emit('update', {video: 'captured'});  
         },
         complete: () => {
           console.log('complete');
@@ -540,6 +544,7 @@ let ieam = {
       // console.log('Add socket', state.sockets.length + 1);
       state.sockets.push(socket);
     });
+    io = socketIO(state.server);
   },
   restart: () => {
     // clean the cache
