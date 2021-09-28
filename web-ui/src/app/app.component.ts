@@ -34,7 +34,7 @@ export class AppComponent implements OnInit, AfterViewInit {
   title = 'web-ui';
   prevJson!: any;
   timer!: any;
-  intervalMS = 5000;
+  intervalMS = 6000;
   selectedFile: any = {};
   uploaded = '';
   matCardHeight: number;
@@ -54,11 +54,12 @@ export class AppComponent implements OnInit, AfterViewInit {
   cutoff: string;
   assetTypes: string[] = ['Image', 'Video'];
   cameras: any[] = [
-    {name: 'cam1'},
-    {name: 'cam2'},
-    {name: 'cam3'}
+    {name: 'cam1', on: false},
+    {name: 'cam2', on: false},
+    {name: 'cam3', on: false}
   ];
   selectedCam = '';
+  mostRecentCamValue = '';
   camerasOn = false;
   previousSelectedCam = '';
   assetType = 'Image';
@@ -68,6 +69,7 @@ export class AppComponent implements OnInit, AfterViewInit {
   isServerCameraDisabled: boolean = true;
   dialogRef: any;
   host: string;
+  lastActive: number;
 
   constructor(
     private http: HttpClient,
@@ -76,6 +78,10 @@ export class AppComponent implements OnInit, AfterViewInit {
     private elementRef: ElementRef
   ){}
   ngOnInit(): void {
+    document.body.addEventListener('click', () => {
+      this.lastActive = Date.now();
+      this.resetTimer();
+    }, true);
     this.isCameraDisabled = location.hostname.indexOf('localhost') < 0 && location.protocol !== 'https';
     this.previousSelectedCam = this.selectedCam = this.host = location.href.replace(/\/$/, "");
     this.cameras.forEach((cam:any, i:number) => {
@@ -132,6 +138,10 @@ export class AppComponent implements OnInit, AfterViewInit {
     }
   }
   loadJson(file: any) {
+    if(Date.now() - this.lastActive > 120000) {
+      clearInterval(this.timer);
+      return;
+    }
     this.http.get(file)
     .subscribe((data) => {
       console.log('json', data)
@@ -345,11 +355,19 @@ export class AppComponent implements OnInit, AfterViewInit {
   jumpTo(evt: any) {
     if(evt.isUserInput) {
       console.log(evt)
+      this.mostRecentCamValue = evt.source._mostRecentViewValue;
       this.showDialog(evt);
-      this.toggleRemoteCamera(true);
+      // this.toggleRemoteCamera(true);
     } else {
       this.previousSelectedCam = evt.source.value;
     }
+  }
+  isOn() {
+    const on = this.cameras.find((el) => {
+      console.log(el.name, el.on, this.mostRecentCamValue)
+      return el.name === this.mostRecentCamValue && el.on;
+    })
+    return on;
   }
   showDialog(evt: any) {
     let path = evt.source.value;
@@ -390,10 +408,17 @@ export class AppComponent implements OnInit, AfterViewInit {
     this.toggleRemoteCamera(evt.checked);
   }
   toggleRemoteCamera(toggle: boolean) {
+    this.resetTimer();
     this.http.get(`${this.host}/remote-cameras-on?on=${toggle}`)
     .subscribe((data) => {
       console.log('json', data)
       this.showMessage(`Turn remote cameras: ${toggle ? 'on' : 'off'}`);
+      this.cameras.map((el) => {
+        if(el.name === this.mostRecentCamValue) {
+         el.on = toggle;
+        }
+      })
+      this.resetTimer();
     });
   }
   ngOnDestroy() {

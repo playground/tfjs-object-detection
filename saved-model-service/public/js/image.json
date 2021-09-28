@@ -4,26 +4,26 @@
       "bbox": [
         {
           "detectedBox": [
-            "0.26",
-            "0.13",
-            "0.34",
-            "0.21"
+            "0.00",
+            "0.16",
+            "0.23",
+            "0.36"
           ],
           "detectedClass": "hard-hat",
-          "detectedScore": "0.98"
+          "detectedScore": "1.00"
         },
         {
           "detectedBox": [
-            "0.08",
-            "0.70",
-            "0.20",
-            "0.84"
+            "0.30",
+            "0.45",
+            "0.56",
+            "0.63"
           ],
           "detectedClass": "hard-hat",
-          "detectedScore": "0.88"
+          "detectedScore": "0.99"
         }
       ],
-      "elapsedTime": 187.86748799681664
+      "elapsedTime": 305.66185599565506
     }
   },
   "version": {
