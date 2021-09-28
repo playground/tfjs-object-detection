@@ -69,6 +69,7 @@ export class AppComponent implements OnInit, AfterViewInit {
   isServerCameraDisabled: boolean = true;
   dialogRef: any;
   host: string;
+  lastActive: number;
 
   constructor(
     private http: HttpClient,
@@ -77,6 +78,10 @@ export class AppComponent implements OnInit, AfterViewInit {
     private elementRef: ElementRef
   ){}
   ngOnInit(): void {
+    document.body.addEventListener('click', () => {
+      this.lastActive = Date.now();
+      this.resetTimer();
+    }, true);
     this.isCameraDisabled = location.hostname.indexOf('localhost') < 0 && location.protocol !== 'https';
     this.previousSelectedCam = this.selectedCam = this.host = location.href.replace(/\/$/, "");
     this.cameras.forEach((cam:any, i:number) => {
@@ -133,6 +138,10 @@ export class AppComponent implements OnInit, AfterViewInit {
     }
   }
   loadJson(file: any) {
+    if(Date.now() - this.lastActive > 120000) {
+      clearInterval(this.timer);
+      return;
+    }
     this.http.get(file)
     .subscribe((data) => {
       console.log('json', data)
