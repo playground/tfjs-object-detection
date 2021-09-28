@@ -23,14 +23,14 @@
           "detectedScore": "0.99"
         }
       ],
-      "elapsedTime": 305.66185599565506
+      "elapsedTime": 268.72853299975395
     }
   },
   "version": {
     "name": "Demo model",
     "version": "1.0.0"
   },
-  "confidentCutoff": 0.85,
+  "confidentCutoff": "0.90",
   "platform": "darwin:x64",
   "cameraDisabled": false,
   "remoteCamerasOn": "false"

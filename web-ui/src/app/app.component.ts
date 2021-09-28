@@ -138,7 +138,7 @@ export class AppComponent implements OnInit, AfterViewInit {
     }
   }
   loadJson(file: any) {
-    if(Date.now() - this.lastActive > 120000) {
+    if(Date.now() - this.lastActive > 180000) {
       clearInterval(this.timer);
       return;
     }
