@@ -390,7 +390,7 @@ export class AppComponent implements OnInit, AfterViewInit {
               if(cam.name == evt.source._mostRecentViewValue) {
                 cam.url = resp.path;
                 this.host = cam.url;
-                this.selectedCam = cam.url;
+                // this.selectedCam = cam.url;
                 this.loadJson(`${this.host}/static/js/${this.assetType.toLowerCase()}.json`);
                 this.resetTimer();
               }
