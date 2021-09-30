@@ -138,7 +138,7 @@ export class AppComponent implements OnInit, AfterViewInit {
     }
   }
   loadJson(file: any) {
-    if(Date.now() - this.lastActive > 120000) {
+    if(Date.now() - this.lastActive > 180000) {
       clearInterval(this.timer);
       return;
     }
@@ -314,7 +314,7 @@ export class AppComponent implements OnInit, AfterViewInit {
     clearInterval(this.timer);
     let formData = new FormData();
     formData.append('imageFile', imageFile);
-    this.http.post<any>('/upload', formData)
+    this.http.post<any>(`${this.host}/upload`, formData)
     .subscribe((res) => {
       console.log(res)
       this.showMessage(`${imageFile.name} uploaded successfully.`)
@@ -390,7 +390,7 @@ export class AppComponent implements OnInit, AfterViewInit {
               if(cam.name == evt.source._mostRecentViewValue) {
                 cam.url = resp.path;
                 this.host = cam.url;
-                this.selectedCam = cam.url;
+                // this.selectedCam = cam.url;
                 this.loadJson(`${this.host}/static/js/${this.assetType.toLowerCase()}.json`);
                 this.resetTimer();
               }
