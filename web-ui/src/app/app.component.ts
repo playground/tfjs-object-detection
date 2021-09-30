@@ -314,7 +314,7 @@ export class AppComponent implements OnInit, AfterViewInit {
     clearInterval(this.timer);
     let formData = new FormData();
     formData.append('imageFile', imageFile);
-    this.http.post<any>('/upload', formData)
+    this.http.post<any>(`${this.host}/upload`, formData)
     .subscribe((res) => {
       console.log(res)
       this.showMessage(`${imageFile.name} uploaded successfully.`)

@@ -4,57 +4,113 @@
       "bbox": [
         {
           "detectedBox": [
-            "0.12",
-            "0.73",
-            "0.35",
-            "0.90"
+            "0.14",
+            "0.37",
+            "0.41",
+            "0.54"
           ],
-          "detectedClass": "hard-hat",
+          "detectedClass": "hardhat",
           "detectedScore": "1.00"
         },
         {
           "detectedBox": [
-            "0.05",
-            "0.57",
-            "0.24",
-            "0.74"
+            "0.09",
+            "0.33",
+            "0.99",
+            "0.57"
           ],
-          "detectedClass": "hard-hat",
-          "detectedScore": "1.00"
+          "detectedClass": "person",
+          "detectedScore": "0.99"
+        },
+        {
+          "detectedBox": [
+            "0.40",
+            "0.33",
+            "0.96",
+            "0.54"
+          ],
+          "detectedClass": "vest",
+          "detectedScore": "0.93"
         }
       ],
-      "elapsedTime": 412.37406301498413
+      "elapsedTime": 356.5187900066376
     },
     "/static/video/image_2.jpg": {
       "bbox": [
         {
           "detectedBox": [
-            "0.06",
-            "0.61",
-            "0.33",
-            "0.77"
+            "0.10",
+            "0.52",
+            "0.34",
+            "0.65"
           ],
-          "detectedClass": "hard-hat",
-          "detectedScore": "1.00"
+          "detectedClass": "hardhat",
+          "detectedScore": "0.99"
         },
         {
           "detectedBox": [
-            "0.16",
-            "0.81",
-            "0.39",
-            "0.98"
+            "0.08",
+            "0.47",
+            "1.00",
+            "0.71"
           ],
-          "detectedClass": "hard-hat",
-          "detectedScore": "1.00"
+          "detectedClass": "person",
+          "detectedScore": "0.99"
+        },
+        {
+          "detectedBox": [
+            "0.31",
+            "0.47",
+            "0.98",
+            "0.71"
+          ],
+          "detectedClass": "vest",
+          "detectedScore": "0.97"
         }
       ],
-      "elapsedTime": 304.9086170196533
+      "elapsedTime": 335.4880369901657
+    },
+    "/static/video/image_3.jpg": {
+      "bbox": [
+        {
+          "detectedBox": [
+            "0.40",
+            "0.00",
+            "0.75",
+            "0.16"
+          ],
+          "detectedClass": "hardhat",
+          "detectedScore": "0.99"
+        },
+        {
+          "detectedBox": [
+            "0.67",
+            "0.06",
+            "0.97",
+            "0.25"
+          ],
+          "detectedClass": "vest",
+          "detectedScore": "0.96"
+        },
+        {
+          "detectedBox": [
+            "0.43",
+            "0.03",
+            "0.96",
+            "0.25"
+          ],
+          "detectedClass": "person",
+          "detectedScore": "0.87"
+        }
+      ],
+      "elapsedTime": 305.928121984005
     }
   },
   "version": {
     "name": "Demo model",
-    "version": "1.0.0"
+    "version": "2.0.0"
   },
-  "confidentCutoff": 0.85,
-  "platform": "darwin:x64"
+  "confidentCutoff": "0.85",
+  "platform": "darwin:x64",
+  "cameraDisabled": false
 }
