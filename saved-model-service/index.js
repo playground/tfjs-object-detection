@@ -451,6 +451,10 @@ let ieam = {
         labels = jsonfile.readFileSync(`${modelPath}/assets/labels.json`);
         version = jsonfile.readFileSync(`${modelPath}/assets/version.json`);
         console.log('version: ', version)
+
+        let images = ieam.getFiles(videoPath, /.jpg|.png/);
+        console.log(images)
+        ieam.inferenceVideo(images);      
       }
     } catch(e) {
       console.log(e);
