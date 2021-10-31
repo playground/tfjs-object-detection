@@ -1,14 +1,16 @@
-import { Observable, of } from 'rxjs';
-import { existsSync, renameSync, copyFileSync, unlinkSync, readFileSync } from 'fs';
+import { Observable, of, forkJoin } from 'rxjs';
+import { existsSync, renameSync, copyFileSync, unlinkSync, readFileSync, readdirSync } from 'fs';
 import { Messenger } from './messenger';
 import { Params } from './params';
 import path = require('path');
 import StaticFileHandler = require('serverless-aws-static-file-handler');
-let tfnode = require('@tensorflow/tfjs-node');
+const tfnode = require('@tensorflow/tfjs-node');
 const jsonfile = require('jsonfile');
+const player = require('play-sound')();
 
 const clientFilePath = path.join(process.cwd(), './public/');
 const fileHandler = new StaticFileHandler(clientFilePath);
+let model;
 
 export const handler = (params: Params, context, callback) => {
   params.body = params.body ? JSON.parse(params.body) : null;
@@ -20,14 +22,13 @@ export const handler = (params: Params, context, callback) => {
   } else {
     params.contentType = params.contentType ? params.contentType : 'application/json';
     const response = new Messenger(params);
-    action.exec(params, )
+    action.exec(params)
     .subscribe((data) => {
       callback(null, response.send(data));
     })
   }
 }
 
-let model;
 let labels;
 let version;
 const intervalMS = 10000;
@@ -106,13 +107,17 @@ let action = {
           }
         })(); 
       } else {
-        // images = ieam.getFiles(videoPath, /.jpg|.png/);
-        // console.log(images)
-        // ieam.inferenceVideo(images);  
-        observer.next(`Hello!`);
-        observer.complete();
+        (async () => {
+          await ieam.loadModel(currentModelPath);
+
+          let images = ieam.getFiles(videoPath, /.jpg|.png/);
+          console.log(images)
+          ieam.inferenceVideo(images);
+          console.log('helllo')  
+          observer.next(`Hello!`);
+          observer.complete();
+        })(); 
       } 
-  
     });
   },
   default: (params: Params) => {
@@ -123,7 +128,55 @@ let action = {
   }
 }
 
+const mp3s = {
+  'snapshot': './public/media/audio-snap.mp3',
+  'gotMail': './public/media/youve-got-mail-sound.mp3',
+  'theForce': './public/media/may-the-force-be-with-you.mp3' 
+};
+
 let ieam = {
+  inferenceVideo: (files: any) => {
+    try {
+      let $inference = {};
+      files.forEach(async (imageFile) => {
+        if(existsSync(imageFile)) {
+          console.log(imageFile)
+          const image = readFileSync(imageFile);
+          const decodedImage = tfnode.node.decodeImage(new Uint8Array(image), 3);
+          const inputTensor = decodedImage.expandDims(0);
+          $inference[imageFile.replace('./public/', '/static/')] = (ieam.inference(inputTensor));
+        }
+      })
+      forkJoin($inference)
+      .subscribe({
+        next: (value) => {
+          console.log(value);
+          let json = Object.assign({}, {images: value, version: version, confidentCutoff: confidentCutoff, platform: `${process.platform}:${process.arch}`, cameraDisabled: cameraDisabled});
+          jsonfile.writeFile(`${staticPath}/video.json`, json, {spaces: 2});
+          ieam.soundEffect(mp3s.theForce);  
+        },
+        complete: () => {
+          console.log('complete');
+        }
+      });
+    } catch(e) {
+      console.log(e);
+    }
+  },
+  soundEffect: (mp3) => {
+    console.log(mp3)
+    player.play(mp3, (err) => {
+      if (err) console.log(`Could not play sound: ${err}`);  
+    });  
+  },
+  getFiles: (srcDir, ext) => {
+    let files = readdirSync(srcDir);
+    return files.map((file) => {
+      if(ext && file.match(ext)) {
+        return `${srcDir}/${file}`;
+      }
+    });  
+  },
   renameFile: (from, to) => {
     if(existsSync(from)) {
       renameSync(from, to);

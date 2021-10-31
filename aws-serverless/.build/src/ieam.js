@@ -44,8 +44,10 @@ var path = require("path");
 var StaticFileHandler = require("serverless-aws-static-file-handler");
 var tfnode = require('@tensorflow/tfjs-node');
 var jsonfile = require('jsonfile');
+var player = require('play-sound')();
 var clientFilePath = path.join(process.cwd(), './public/');
 var fileHandler = new StaticFileHandler(clientFilePath);
+var model;
 var handler = function (params, context, callback) {
     params.body = params.body ? JSON.parse(params.body) : null;
     params.action = params.body ? params.body.action : params.path.replace(/^\/|\/$/g, '');
@@ -64,7 +66,6 @@ var handler = function (params, context, callback) {
     }
 };
 exports.handler = handler;
-var model;
 var labels;
 var version;
 var intervalMS = 10000;
@@ -151,11 +152,23 @@ var action = {
                 }); })();
             }
             else {
-                // images = ieam.getFiles(videoPath, /.jpg|.png/);
-                // console.log(images)
-                // ieam.inferenceVideo(images);  
-                observer.next("Hello!");
-                observer.complete();
+                (function () { return __awaiter(void 0, void 0, void 0, function () {
+                    var images;
+                    return __generator(this, function (_a) {
+                        switch (_a.label) {
+                            case 0: return [4 /*yield*/, ieam.loadModel(currentModelPath)];
+                            case 1:
+                                _a.sent();
+                                images = ieam.getFiles(videoPath, /.jpg|.png/);
+                                console.log(images);
+                                ieam.inferenceVideo(images);
+                                console.log('helllo');
+                                observer.next("Hello!");
+                                observer.complete();
+                                return [2 /*return*/];
+                        }
+                    });
+                }); })();
             }
         });
     },
@@ -166,7 +179,60 @@ var action = {
         });
     }
 };
+var mp3s = {
+    'snapshot': './public/media/audio-snap.mp3',
+    'gotMail': './public/media/youve-got-mail-sound.mp3',
+    'theForce': './public/media/may-the-force-be-with-you.mp3'
+};
 var ieam = {
+    inferenceVideo: function (files) {
+        try {
+            var $inference_1 = {};
+            files.forEach(function (imageFile) { return __awaiter(void 0, void 0, void 0, function () {
+                var image, decodedImage, inputTensor;
+                return __generator(this, function (_a) {
+                    if ((0, fs_1.existsSync)(imageFile)) {
+                        console.log(imageFile);
+                        image = (0, fs_1.readFileSync)(imageFile);
+                        decodedImage = tfnode.node.decodeImage(new Uint8Array(image), 3);
+                        inputTensor = decodedImage.expandDims(0);
+                        $inference_1[imageFile.replace('./public/', '/static/')] = (ieam.inference(inputTensor));
+                    }
+                    return [2 /*return*/];
+                });
+            }); });
+            (0, rxjs_1.forkJoin)($inference_1)
+                .subscribe({
+                next: function (value) {
+                    console.log(value);
+                    var json = Object.assign({}, { images: value, version: version, confidentCutoff: confidentCutoff, platform: process.platform + ":" + process.arch, cameraDisabled: cameraDisabled });
+                    jsonfile.writeFile(staticPath + "/video.json", json, { spaces: 2 });
+                    ieam.soundEffect(mp3s.theForce);
+                },
+                complete: function () {
+                    console.log('complete');
+                }
+            });
+        }
+        catch (e) {
+            console.log(e);
+        }
+    },
+    soundEffect: function (mp3) {
+        console.log(mp3);
+        player.play(mp3, function (err) {
+            if (err)
+                console.log("Could not play sound: " + err);
+        });
+    },
+    getFiles: function (srcDir, ext) {
+        var files = (0, fs_1.readdirSync)(srcDir);
+        return files.map(function (file) {
+            if (ext && file.match(ext)) {
+                return srcDir + "/" + file;
+            }
+        });
+    },
     renameFile: function (from, to) {
         if ((0, fs_1.existsSync)(from)) {
             (0, fs_1.renameSync)(from, to);

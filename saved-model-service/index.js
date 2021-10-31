@@ -197,7 +197,7 @@ let ieam = {
     } catch(e) {
       console.log(e);
     }
-},
+  },
   traverse: (dir, done) => {
     var results = [];
     readdir(dir, (err, list) => {
