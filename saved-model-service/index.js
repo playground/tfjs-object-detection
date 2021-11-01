@@ -28,6 +28,7 @@ const staticPath = './public/js';
 const mmsPath = '/mms-shared';
 const localPath = './local-shared';
 const videoPath = './public/video';
+const backupPath = './public/backup';
 const oldImage = `${imagePath}/image-old.png`;
 let sharedPath = '';
 let timer;
@@ -35,6 +36,7 @@ const intervalMS = 10000;
 let cycles = 0;
 let count = 0;
 let videoFormat = ['.mp4', '.avi', '.webm'];
+let videoSrc = '/static/backup/video-old.mp4';
 let cameraDisabled = true;
 let confidentCutoff = 0.85;
 const $score = new Subject().asObservable().subscribe((data) => {
@@ -70,9 +72,11 @@ mp3s = {
 
 let ieam = {
   soundEffect: (mp3) => {
-    console.log(mp3)
+    // console.log(mp3)
     player.play(mp3, (err) => {
-      if (err) console.log(`Could not play sound: ${err}`);  
+      if (err) {
+        // console.log(`Could not play sound: ${err}`);
+      }    
     });  
   },
   capture: () => {
@@ -186,7 +190,7 @@ let ieam = {
       .subscribe({
         next: (value) => {
           console.log(value);
-          let json = Object.assign({}, {images: value, version: version, confidentCutoff: confidentCutoff, platform: `${process.platform}:${process.arch}`, cameraDisabled: cameraDisabled});
+          let json = Object.assign({}, {images: value, version: version, videoSrc: `${videoSrc}?${Date.now()}`, confidentCutoff: confidentCutoff, platform: `${process.platform}:${process.arch}`, cameraDisabled: cameraDisabled});
           jsonfile.writeFile(`${staticPath}/video.json`, json, {spaces: 2});
           ieam.soundEffect(mp3s.theForce);  
         },
@@ -233,7 +237,7 @@ let ieam = {
     return new Observable((observer) => {
       try {
         if(existsSync(file)) {
-          console.log(file)
+          console.log('$video', file)
           ieam.deleteFiles(videoPath, /.jpg|.png/);
           let process = new ffmpeg(file);
           process.then((video) => {
@@ -295,6 +299,19 @@ let ieam = {
       console.log(e)
     }
   },
+  getVideoFile: (file) => {
+    let video = undefined;
+    videoFormat.every((ext) => {
+      let v = `${file}${ext}`;
+      if(existsSync(v)) {
+        video = v;
+        return false;
+      } else {
+        return true;
+      }
+    })
+    return video;
+  },
   checkVideo: () => {
     try {
       let video = undefined;
@@ -317,6 +334,10 @@ let ieam = {
           let images = files.filter((f) => f.indexOf('.jpg') > 0);
           let video = files.filter((f) => f.indexOf('.jpg') < 0);
           if(existsSync(video[0])) {
+            let oldVideo = video[0].replace('/video/video.', '/backup/video-old.');
+            console.log(video[0], oldVideo)
+            copyFileSync(video[0], oldVideo);
+            videoSrc = oldVideo.replace('./public/backup', '/static/backup') + `?${Date.now()}`;  
             unlinkSync(video[0]);
           }
           ieam.inferenceVideo(images);  
@@ -517,7 +538,13 @@ let ieam = {
     if(!existsSync(oldImage)) {
       copyFileSync(`${imagePath}/backup.png`, oldImage)
     }
-    ieam.renameFile(oldImage, `${imagePath}/image.png`);  
+    ieam.renameFile(oldImage, `${imagePath}/image.png`);
+    let video = ieam.getVideoFile(`${backupPath}/video-old`);
+    if(!video) {
+      copyFileSync(`${backupPath}/video-bk.mp4`, `${backupPath}/video-old.mp4`);
+    } else {
+      videoSrc = video.replace('./public/', '/static/');
+    }  
   },
   start: () => {
     count = 0;

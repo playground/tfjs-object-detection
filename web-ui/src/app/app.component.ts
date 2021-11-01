@@ -27,6 +27,8 @@ export class AppComponent implements OnInit, AfterViewInit {
   camera: ElementRef;
   @ViewChild('front_camera', {static: false, read: ElementRef})
   frontCamera: ElementRef;
+  @ViewChild('video', {static: false, read: ElementRef})
+  video: ElementRef;
 
   columns: string[] = ['label', 'score', 'min', 'max'];
   dataSource: any[] = [];
@@ -152,6 +154,10 @@ export class AppComponent implements OnInit, AfterViewInit {
           this.cutoff = ''+this.prevJson.confidentCutoff;
           this.isServerCameraDisabled = this.prevJson.cameraDisabled === 'true' || this.prevJson.cameraDisabled === true;
           this.camerasOn = this.prevJson.remoteCamerasOn === 'true' || this.prevJson.remoteCamerasOn === true;
+          if(this.assetType === 'Video') {
+            this.video.nativeElement.src = this.prevJson.videoSrc;
+            this.video.nativeElement.load();
+          }
           this.drawComponent();
         }
       }

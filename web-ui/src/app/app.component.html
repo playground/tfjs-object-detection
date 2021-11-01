@@ -91,6 +91,11 @@
       (cameraSwitched)="cameraWasSwitched($event)"></webcam>
 
       <mat-card-subtitle style="margin-bottom:5px;">{{platform}}</mat-card-subtitle>
+
+      <video #video *ngIf="assetType == 'Video'" width="350" controls>
+        Your browser does not support HTML5 video.
+      </video>
+
       <div *ngFor="let image of images">
 
         <!-- <canvas #canvas *ngIf="showCanvas"></canvas> -->
