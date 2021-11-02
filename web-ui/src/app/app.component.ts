@@ -36,7 +36,7 @@ export class AppComponent implements OnInit, AfterViewInit {
   title = 'web-ui';
   prevJson!: any;
   timer!: any;
-  intervalMS = 6000;
+  intervalMS = 10000;
   selectedFile: any = {};
   uploaded = '';
   matCardHeight: number;
@@ -130,6 +130,12 @@ export class AppComponent implements OnInit, AfterViewInit {
         console.log('json', data)
       });
     }
+  }
+  onRefresh(evt: any) {
+    this.http.get(`${this.host}/score?score=${this.cutoff}&assetType=${this.assetType}`)
+    .subscribe((data) => {
+      console.log('json', data)
+    });
   }
   onAssetTypeChange(evt: any) {
     if(evt.isUserInput) {

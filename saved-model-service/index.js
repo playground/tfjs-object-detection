@@ -39,10 +39,12 @@ let videoFormat = ['.mp4', '.avi', '.webm'];
 let videoSrc = '/static/backup/video-old.mp4';
 let cameraDisabled = true;
 let confidentCutoff = 0.85;
+let assetType = 'Image';
 const $score = new Subject().asObservable().subscribe((data) => {
   if(data.name == 'score') {
     confidentCutoff = parseFloat(data.score).toFixed(2);
-    console.log('subscribe: ', data) 
+    console.log('subscribe: ', data)
+    assetType = data.assetType; 
     if(data.assetType === 'Image') {
       ieam.renameFile(oldImage, `${imagePath}/image.png`);  
     } else {
@@ -121,7 +123,7 @@ let ieam = {
             json = Object.assign({images: images, version: version, confidentCutoff: confidentCutoff, platform: `${process.platform}:${process.arch}`, cameraDisabled: cameraDisabled, remoteCamerasOn: process.env.npm_config_remoteCamerasOn});
             jsonfile.writeFile(`${staticPath}/image.json`, json, {spaces: 2});
             ieam.renameFile(imageFile, `${imagePath}/image-old.png`);
-            ieam.soundEffect(mp3s.theForce);  
+            // ieam.soundEffect(mp3s.theForce);  
             ieam.doCapture = true;  
           });
         } catch(e) {
@@ -133,9 +135,14 @@ let ieam = {
         if(Date.now() - process.env.npm_config_lastinteractive > 120000) {
           process.env.npm_config_remoteCamerasOn = false;
         }
-        const random = Math.floor(Math.random() * 10);
-        imageFile = `${imagePath}/dataset/image${random}.jpg`;
-        copyFileSync(imageFile, `${imagePath}/image.jpg`)
+        if(assetType === 'Image') {
+          const random = Math.floor(Math.random() * 10);
+          imageFile = `${imagePath}/dataset/image${random}.jpg`;
+          copyFileSync(imageFile, `${imagePath}/image.jpg`)  
+        } else {
+          images = ieam.getFiles(videoPath, /.jpg|.png/);
+          ieam.inferenceVideo(images);  
+        }
       }  
     } catch(e) {
       console.log(e);
@@ -190,9 +197,9 @@ let ieam = {
       .subscribe({
         next: (value) => {
           console.log(value);
-          let json = Object.assign({}, {images: value, version: version, videoSrc: `${videoSrc}?${Date.now()}`, confidentCutoff: confidentCutoff, platform: `${process.platform}:${process.arch}`, cameraDisabled: cameraDisabled});
+          let json = Object.assign({}, {images: value, version: version, videoSrc: `${videoSrc}?${Date.now()}`, confidentCutoff: confidentCutoff, platform: `${process.platform}:${process.arch}`, cameraDisabled: cameraDisabled, remoteCamerasOn: process.env.npm_config_remoteCamerasOn});
           jsonfile.writeFile(`${staticPath}/video.json`, json, {spaces: 2});
-          ieam.soundEffect(mp3s.theForce);  
+          // ieam.soundEffect(mp3s.theForce);  
         },
         complete: () => {
           console.log('complete');
@@ -314,16 +321,7 @@ let ieam = {
   },
   checkVideo: () => {
     try {
-      let video = undefined;
-      videoFormat.every((ext) => {
-        let v = `${videoPath}/video${ext}`;
-        if(existsSync(v)) {
-          video = v;
-          return false;
-        } else {
-          return true;
-        }
-      })
+      let video = ieam.getVideoFile(`${videoPath}/video`);
       if(!video) {
         return;
       }
@@ -334,10 +332,8 @@ let ieam = {
           let images = files.filter((f) => f.indexOf('.jpg') > 0);
           let video = files.filter((f) => f.indexOf('.jpg') < 0);
           if(existsSync(video[0])) {
-            let oldVideo = video[0].replace('/video/video.', '/backup/video-old.');
-            console.log(video[0], oldVideo)
-            copyFileSync(video[0], oldVideo);
-            videoSrc = oldVideo.replace('./public/backup', '/static/backup') + `?${Date.now()}`;  
+            console.log(video[0]);
+            copyFileSync(video[0], './public/backup/video-old.mp4');
             unlinkSync(video[0]);
           }
           ieam.inferenceVideo(images);  
@@ -542,8 +538,6 @@ let ieam = {
     let video = ieam.getVideoFile(`${backupPath}/video-old`);
     if(!video) {
       copyFileSync(`${backupPath}/video-bk.mp4`, `${backupPath}/video-old.mp4`);
-    } else {
-      videoSrc = video.replace('./public/', '/static/');
     }  
   },
   start: () => {

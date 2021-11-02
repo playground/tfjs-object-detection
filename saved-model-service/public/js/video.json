@@ -5,258 +5,159 @@
         {
           "detectedBox": [
             "0.12",
-            "0.17",
-            "0.41",
-            "0.30"
+            "0.71",
+            "0.49",
+            "0.92"
           ],
           "detectedClass": "hardhat",
           "detectedScore": "1.00"
         },
         {
           "detectedBox": [
-            "0.01",
-            "0.50",
-            "0.29",
-            "0.63"
-          ],
-          "detectedClass": "hardhat",
-          "detectedScore": "1.00"
-        },
-        {
-          "detectedBox": [
-            "0.19",
-            "0.75",
-            "0.44",
-            "0.87"
-          ],
-          "detectedClass": "hardhat",
-          "detectedScore": "1.00"
-        },
-        {
-          "detectedBox": [
-            "0.11",
-            "0.09",
-            "1.00",
-            "0.34"
-          ],
-          "detectedClass": "person",
-          "detectedScore": "0.99"
-        },
-        {
-          "detectedBox": [
-            "0.45",
-            "0.69",
-            "0.99",
-            "0.91"
-          ],
-          "detectedClass": "vest",
-          "detectedScore": "0.99"
-        },
-        {
-          "detectedBox": [
-            "0.28",
-            "0.43",
-            "1.00",
-            "0.68"
-          ],
-          "detectedClass": "vest",
-          "detectedScore": "0.99"
-        },
-        {
-          "detectedBox": [
-            "0.42",
-            "0.11",
-            "1.00",
-            "0.33"
-          ],
-          "detectedClass": "vest",
-          "detectedScore": "0.98"
-        },
-        {
-          "detectedBox": [
-            "0.02",
-            "0.41",
-            "1.00",
-            "0.69"
-          ],
-          "detectedClass": "person",
-          "detectedScore": "0.98"
-        },
-        {
-          "detectedBox": [
-            "0.18",
-            "0.69",
-            "1.00",
-            "0.93"
-          ],
-          "detectedClass": "person",
-          "detectedScore": "0.94"
-        },
-        {
-          "detectedBox": [
-            "0.28",
-            "0.20",
-            "0.41",
-            "0.29"
-          ],
-          "detectedClass": "mask",
-          "detectedScore": "0.94"
-        },
-        {
-          "detectedBox": [
-            "0.27",
-            "0.62",
-            "0.50",
+            "0.03",
+            "0.57",
+            "0.38",
             "0.73"
           ],
           "detectedClass": "hardhat",
-          "detectedScore": "0.93"
+          "detectedScore": "1.00"
         },
         {
           "detectedBox": [
-            "0.15",
-            "0.51",
-            "0.29",
-            "0.63"
+            "0.50",
+            "0.74",
+            "0.99",
+            "0.95"
+          ],
+          "detectedClass": "vest",
+          "detectedScore": "0.99"
+        },
+        {
+          "detectedBox": [
+            "0.12",
+            "0.71",
+            "1.00",
+            "0.95"
+          ],
+          "detectedClass": "person",
+          "detectedScore": "0.98"
+        },
+        {
+          "detectedBox": [
+            "0.39",
+            "0.53",
+            "0.98",
+            "0.76"
+          ],
+          "detectedClass": "vest",
+          "detectedScore": "0.96"
+        },
+        {
+          "detectedBox": [
+            "0.05",
+            "0.50",
+            "1.00",
+            "0.77"
+          ],
+          "detectedClass": "person",
+          "detectedScore": "0.87"
+        },
+        {
+          "detectedBox": [
+            "0.37",
+            "0.69",
+            "0.50",
+            "0.86"
           ],
           "detectedClass": "mask",
-          "detectedScore": "0.90"
+          "detectedScore": "0.85"
         }
       ],
-      "elapsedTime": 195.58265900611877
+      "elapsedTime": 8035.9722610116005
     },
     "/static/video/image_2.jpg": {
       "bbox": [
         {
           "detectedBox": [
-            "0.00",
-            "0.41",
-            "0.39",
-            "0.62"
+            "0.17",
+            "0.80",
+            "0.50",
+            "0.99"
           ],
           "detectedClass": "hardhat",
           "detectedScore": "1.00"
         },
         {
           "detectedBox": [
-            "0.32",
-            "0.68",
-            "0.71",
-            "0.84"
+            "0.06",
+            "0.61",
+            "0.37",
+            "0.78"
           ],
           "detectedClass": "hardhat",
           "detectedScore": "1.00"
         },
         {
           "detectedBox": [
-            "0.15",
-            "0.00",
-            "0.53",
-            "0.09"
-          ],
-          "detectedClass": "hardhat",
-          "detectedScore": "1.00"
-        },
-        {
-          "detectedBox": [
-            "0.41",
-            "0.32",
-            "0.99",
-            "0.66"
-          ],
-          "detectedClass": "vest",
-          "detectedScore": "0.99"
-        },
-        {
-          "detectedBox": [
-            "0.30",
-            "0.66",
+            "0.13",
+            "0.79",
             "1.00",
-            "0.90"
-          ],
-          "detectedClass": "person",
-          "detectedScore": "0.99"
-        },
-        {
-          "detectedBox": [
-            "0.34",
-            "0.00",
-            "0.53",
-            "0.09"
-          ],
-          "detectedClass": "mask",
-          "detectedScore": "0.99"
-        },
-        {
-          "detectedBox": [
-            "0.00",
-            "0.30",
-            "1.00",
-            "0.69"
+            "1.00"
           ],
           "detectedClass": "person",
           "detectedScore": "0.98"
         },
         {
           "detectedBox": [
-            "0.11",
-            "0.00",
-            "1.00",
-            "0.20"
+            "0.34",
+            "0.58",
+            "0.99",
+            "0.84"
           ],
-          "detectedClass": "person",
+          "detectedClass": "vest",
+          "detectedScore": "0.98"
+        },
+        {
+          "detectedBox": [
+            "0.49",
+            "0.81",
+            "1.00",
+            "0.99"
+          ],
+          "detectedClass": "vest",
+          "detectedScore": "0.98"
+        },
+        {
+          "detectedBox": [
+            "0.36",
+            "0.47",
+            "0.50",
+            "0.55"
+          ],
+          "detectedClass": "hardhat",
           "detectedScore": "0.97"
         },
         {
           "detectedBox": [
-            "0.53",
-            "0.70",
-            "0.70",
-            "0.83"
-          ],
-          "detectedClass": "mask",
-          "detectedScore": "0.96"
-        },
-        {
-          "detectedBox": [
-            "0.66",
-            "0.68",
+            "0.10",
+            "0.58",
             "1.00",
-            "0.88"
+            "0.84"
           ],
-          "detectedClass": "vest",
-          "detectedScore": "0.92"
-        },
-        {
-          "detectedBox": [
-            "0.18",
-            "0.44",
-            "0.37",
-            "0.61"
-          ],
-          "detectedClass": "mask",
-          "detectedScore": "0.86"
-        },
-        {
-          "detectedBox": [
-            "0.60",
-            "0.01",
-            "1.00",
-            "0.16"
-          ],
-          "detectedClass": "vest",
-          "detectedScore": "0.85"
+          "detectedClass": "person",
+          "detectedScore": "0.91"
         }
       ],
-      "elapsedTime": 283.3090299963951
+      "elapsedTime": 187.77990198135376
     }
   },
   "version": {
     "name": "Demo model",
     "version": "2.0.0"
   },
-  "videoSrc": "/static/backup/video-old.webm?1635809099821?1635809100310",
+  "videoSrc": "/static/backup/video-old.mp4?1635817435013",
   "confidentCutoff": 0.85,
   "platform": "darwin:x64",
-  "cameraDisabled": false
+  "cameraDisabled": false,
+  "remoteCamerasOn": "false"
 }

@@ -4,44 +4,124 @@
       "bbox": [
         {
           "detectedBox": [
-            "0.43",
-            "0.26",
-            "1.00",
-            "0.53"
+            "0.29",
+            "0.13",
+            "0.59",
+            "0.30"
           ],
           "detectedClass": "vest",
           "detectedScore": "1.00"
         },
         {
           "detectedBox": [
-            "0.02",
-            "0.33",
-            "0.41",
-            "0.53"
+            "0.28",
+            "0.78",
+            "0.47",
+            "0.89"
           ],
           "detectedClass": "hardhat",
           "detectedScore": "1.00"
         },
         {
           "detectedBox": [
-            "0.01",
-            "0.24",
-            "1.00",
-            "0.58"
+            "0.11",
+            "0.63",
+            "0.29",
+            "0.74"
+          ],
+          "detectedClass": "hardhat",
+          "detectedScore": "1.00"
+        },
+        {
+          "detectedBox": [
+            "0.13",
+            "0.18",
+            "0.30",
+            "0.29"
+          ],
+          "detectedClass": "hardhat",
+          "detectedScore": "0.99"
+        },
+        {
+          "detectedBox": [
+            "0.07",
+            "0.08",
+            "0.92",
+            "0.32"
           ],
           "detectedClass": "person",
-          "detectedScore": "0.99"
+          "detectedScore": "0.97"
+        },
+        {
+          "detectedBox": [
+            "0.09",
+            "0.55",
+            "0.96",
+            "0.75"
+          ],
+          "detectedClass": "person",
+          "detectedScore": "0.97"
+        },
+        {
+          "detectedBox": [
+            "0.53",
+            "0.30",
+            "0.90",
+            "0.49"
+          ],
+          "detectedClass": "vest",
+          "detectedScore": "0.97"
+        },
+        {
+          "detectedBox": [
+            "0.27",
+            "0.75",
+            "0.84",
+            "0.97"
+          ],
+          "detectedClass": "person",
+          "detectedScore": "0.96"
+        },
+        {
+          "detectedBox": [
+            "0.46",
+            "0.75",
+            "0.80",
+            "0.93"
+          ],
+          "detectedClass": "hardhat",
+          "detectedScore": "0.95"
+        },
+        {
+          "detectedBox": [
+            "0.38",
+            "0.79",
+            "0.47",
+            "0.87"
+          ],
+          "detectedClass": "mask",
+          "detectedScore": "0.93"
+        },
+        {
+          "detectedBox": [
+            "0.42",
+            "0.29",
+            "0.93",
+            "0.50"
+          ],
+          "detectedClass": "person",
+          "detectedScore": "0.91"
         }
       ],
-      "elapsedTime": 331.28847402334213
+      "elapsedTime": 225.00113701820374
     }
   },
   "version": {
     "name": "Demo model",
     "version": "2.0.0"
   },
-  "confidentCutoff": 0.85,
+  "confidentCutoff": "0.85",
   "platform": "darwin:x64",
   "cameraDisabled": false,
-  "remoteCamerasOn": "false"
+  "remoteCamerasOn": "true"
 }
