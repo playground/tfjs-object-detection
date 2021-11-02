@@ -64,7 +64,7 @@ export class AppComponent implements OnInit, AfterViewInit {
   mostRecentCamValue = '';
   camerasOn = false;
   previousSelectedCam = '';
-  assetType = 'Image';
+  assetType = 'Video';
   images: any[] = [];
   platform: string = '';
   isCameraDisabled: boolean;
