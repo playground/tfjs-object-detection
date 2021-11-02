@@ -4,76 +4,36 @@
       "bbox": [
         {
           "detectedBox": [
+            "0.43",
             "0.26",
-            "0.12",
-            "0.42",
-            "0.21"
+            "1.00",
+            "0.53"
           ],
-          "detectedClass": "head",
+          "detectedClass": "vest",
           "detectedScore": "1.00"
         },
         {
           "detectedBox": [
-            "0.25",
-            "0.06",
+            "0.02",
+            "0.33",
+            "0.41",
+            "0.53"
+          ],
+          "detectedClass": "hardhat",
+          "detectedScore": "1.00"
+        },
+        {
+          "detectedBox": [
+            "0.01",
+            "0.24",
             "1.00",
-            "0.27"
-          ],
-          "detectedClass": "person",
-          "detectedScore": "0.99"
-        },
-        {
-          "detectedBox": [
-            "0.07",
-            "0.64",
-            "1.00",
-            "0.95"
-          ],
-          "detectedClass": "person",
-          "detectedScore": "0.99"
-        },
-        {
-          "detectedBox": [
-            "0.07",
-            "0.71",
-            "0.31",
-            "0.84"
-          ],
-          "detectedClass": "head",
-          "detectedScore": "0.97"
-        },
-        {
-          "detectedBox": [
-            "0.17",
-            "0.72",
-            "0.31",
-            "0.83"
-          ],
-          "detectedClass": "mask",
-          "detectedScore": "0.96"
-        },
-        {
-          "detectedBox": [
-            "0.21",
-            "0.48",
-            "0.34",
-            "0.54"
-          ],
-          "detectedClass": "head",
-          "detectedScore": "0.95"
-        },
-        {
-          "detectedBox": [
-            "0.20",
-            "0.43",
-            "0.96",
             "0.58"
           ],
           "detectedClass": "person",
-          "detectedScore": "0.94"
+          "detectedScore": "0.99"
         }
       ],
-      "elapsedTime": 174.82935601472855
+      "elapsedTime": 239.08659100532532
     }
   },
   "version": {

@@ -539,6 +539,7 @@ let ieam = {
     if(!video) {
       copyFileSync(`${backupPath}/video-bk.mp4`, `${backupPath}/video-old.mp4`);
     }  
+    copyFileSync(`${backupPath}/video-old.mp4`, `${videoPath}/video.mp4`);
   },
   start: () => {
     count = 0;
