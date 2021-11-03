@@ -47,11 +47,12 @@ certs/
 .DS_Store
 Thumbs.db
 .env-*
-models
 inference_graph
-*.zip
 *.pem
 dist
 dist-old
 history*.txt
 notes/
+
+# But not these files...
+!backup/*/*.*

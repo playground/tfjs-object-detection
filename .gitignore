@@ -47,7 +47,6 @@ _timestamp.json
 .DS_Store
 Thumbs.db
 .env-*
-models
 inference_graph
 *.zip
 *.pem
