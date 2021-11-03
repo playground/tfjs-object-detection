@@ -27,6 +27,8 @@ export class AppComponent implements OnInit, AfterViewInit {
   camera: ElementRef;
   @ViewChild('front_camera', {static: false, read: ElementRef})
   frontCamera: ElementRef;
+  @ViewChild('video', {static: false, read: ElementRef})
+  video: ElementRef;
 
   columns: string[] = ['label', 'score', 'min', 'max'];
   dataSource: any[] = [];
@@ -34,7 +36,7 @@ export class AppComponent implements OnInit, AfterViewInit {
   title = 'web-ui';
   prevJson!: any;
   timer!: any;
-  intervalMS = 6000;
+  intervalMS = 10000;
   selectedFile: any = {};
   uploaded = '';
   matCardHeight: number;
@@ -62,7 +64,7 @@ export class AppComponent implements OnInit, AfterViewInit {
   mostRecentCamValue = '';
   camerasOn = false;
   previousSelectedCam = '';
-  assetType = 'Image';
+  assetType = 'Video';
   images: any[] = [];
   platform: string = '';
   isCameraDisabled: boolean;
@@ -129,6 +131,12 @@ export class AppComponent implements OnInit, AfterViewInit {
       });
     }
   }
+  onRefresh(evt: any) {
+    this.http.get(`${this.host}/score?score=${this.cutoff}&assetType=${this.assetType}`)
+    .subscribe((data) => {
+      console.log('json', data)
+    });
+  }
   onAssetTypeChange(evt: any) {
     if(evt.isUserInput) {
       console.log(evt)
@@ -152,6 +160,10 @@ export class AppComponent implements OnInit, AfterViewInit {
           this.cutoff = ''+this.prevJson.confidentCutoff;
           this.isServerCameraDisabled = this.prevJson.cameraDisabled === 'true' || this.prevJson.cameraDisabled === true;
           this.camerasOn = this.prevJson.remoteCamerasOn === 'true' || this.prevJson.remoteCamerasOn === true;
+          if(this.assetType === 'Video') {
+            this.video.nativeElement.src = this.prevJson.videoSrc;
+            this.video.nativeElement.load();
+          }
           this.drawComponent();
         }
       }

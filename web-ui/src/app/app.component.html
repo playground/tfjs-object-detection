@@ -78,6 +78,9 @@
             </mat-form-field>
             <mat-checkbox class="camera-checkbox-margin" [(ngModel)]="camerasOn" (change)="enableRemoteCameras($event)">
             </mat-checkbox>
+            <span mat-icon-button class="refresh-margin" color="primary" (click)="onRefresh($event)" title="Refresh">
+              <mat-icon>refresh</mat-icon>
+            </span>
           </span>
         </mat-card-subtitle>
       </div>
@@ -91,6 +94,11 @@
       (cameraSwitched)="cameraWasSwitched($event)"></webcam>
 
       <mat-card-subtitle style="margin-bottom:5px;">{{platform}}</mat-card-subtitle>
+
+      <video #video *ngIf="assetType == 'Video'" width="350" controls>
+        Your browser does not support HTML5 video.
+      </video>
+
       <div *ngFor="let image of images">
 
         <!-- <canvas #canvas *ngIf="showCanvas"></canvas> -->
