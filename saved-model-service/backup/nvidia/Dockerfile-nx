@@ -1,0 +1,15 @@
+FROM roboflow/tfjs-jetson
+
+RUN apt-get update
+RUN apt-get --fix-broken install -y
+RUN apt-get install fswebcam ffmpeg -y && apt-get install mpg123 -y
+
+WORKDIR /server
+
+COPY . /server
+RUN npm install -g npm
+RUN npm install
+
+VOLUME /demo_model_mms_helper_shared_volume
+EXPOSE 3000
+CMD [ "npm", "start" ]
