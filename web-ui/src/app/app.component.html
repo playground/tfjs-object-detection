@@ -76,7 +76,7 @@
                 <mat-option *ngFor="let camera of cameras" [value]="camera.url" (onSelectionChange)="jumpTo($event)">{{ camera.name }}</mat-option>
               </mat-select>
             </mat-form-field>
-            <mat-checkbox class="camera-checkbox-margin" [(ngModel)]="camerasOn" (change)="enableRemoteCameras($event)">
+            <mat-checkbox class="camera-checkbox-margin" [disabled]="disableCheckbox" [(ngModel)]="camerasOn" (change)="enableRemoteCameras($event)">
             </mat-checkbox>
             <span mat-icon-button class="refresh-margin" color="primary" (click)="onRefresh($event)" title="Refresh">
               <mat-icon>refresh</mat-icon>

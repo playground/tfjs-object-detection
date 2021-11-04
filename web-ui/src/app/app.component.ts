@@ -72,6 +72,7 @@ export class AppComponent implements OnInit, AfterViewInit {
   dialogRef: any;
   host: string;
   lastActive: number;
+  disableCheckbox = true;
 
   constructor(
     private http: HttpClient,
@@ -141,6 +142,11 @@ export class AppComponent implements OnInit, AfterViewInit {
     if(evt.isUserInput) {
       console.log(evt)
       this.assetType = evt.source.value;
+      if(this.assetType === 'Video') {
+        this.camerasOn = false;
+        this.toggleRemoteCamera(false);
+      }
+      this.disableCheckbox = this.assetType === 'Video';
       this.loadJson(`${this.host}/static/js/${this.assetType.toLowerCase()}.json`);
       this.resetTimer();
     }
