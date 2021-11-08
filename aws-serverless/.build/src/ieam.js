@@ -45,16 +45,25 @@ var StaticFileHandler = require("serverless-aws-static-file-handler");
 var tfnode = require('@tensorflow/tfjs-node');
 var jsonfile = require('jsonfile');
 var player = require('play-sound')();
+var ffmpeg = require('ffmpeg');
+var cp = require('child_process'), exec = cp.exec;
 var clientFilePath = path.join(process.cwd(), './public/');
 var fileHandler = new StaticFileHandler(clientFilePath);
 var model;
 var handler = function (params, context, callback) {
     params.body = params.body ? JSON.parse(params.body) : null;
+    console.log('$$$!!!params', params.path, params.queryStringParameters.score, params.queryStringParameters.assetType);
     params.action = params.body ? params.body.action : params.path.replace(/^\/|\/$/g, '');
-    console.log('$$$params', params.path, params.action, process.cwd(), clientFilePath);
+    console.log('$$$!!!params', params.path, params.action, process.cwd(), clientFilePath);
     if (!params.action) {
+        console.log('$$$###params', params.path, params.action, process.cwd(), clientFilePath);
         params.path = 'index.html';
-        callback(null, fileHandler.get(params, context));
+        ieam.initialInference()
+            .subscribe({
+            complete: function () {
+                callback(null, fileHandler.get(params, context));
+            }
+        });
     }
     else {
         params.contentType = params.contentType ? params.contentType : 'application/json';
@@ -72,6 +81,7 @@ var intervalMS = 10000;
 var cycles = 0;
 var count = 0;
 var videoFormat = ['.mp4', '.avi', '.webm'];
+var videoSrc = '/static/backup/video-old.mp4';
 var cameraDisabled = true;
 var confidentCutoff = 0.85;
 var currentModelPath = './model';
@@ -82,12 +92,20 @@ var staticPath = './public/js';
 var mmsPath = '/mms-shared';
 var localPath = './local-shared';
 var videoPath = './public/video';
+var backupPath = './public/backup';
 var oldImage = imagePath + "/image-old.png";
 var sharedPath = '';
 var action = {
     exec: function (params) {
         try {
             console.log('$$$params', params.action, params.score, process.cwd());
+            // ieam.initialInference()
+            // .subscribe({
+            //   complete: () => {
+            //     console.log('$$$###params', params.path, params.action, process.cwd(), clientFilePath)
+            //     return (action[params.action] || action.default)(params);  
+            //   }
+            // })
             return (action[params.action] || action["default"])(params);
         }
         catch (e) {
@@ -100,6 +118,42 @@ var action = {
             observer.complete();
         });
     },
+    upload: function (params) {
+        return new rxjs_1.Observable(function (observer) {
+            try {
+                console.log('#$@#$@', params.files, params);
+                if (!params.files || Object.keys(params.files).length === 0) {
+                    // return params.status(400).send('No files were uploaded.');
+                }
+                else {
+                    var imageFile = params.files.imageFile;
+                    var mimetype = imageFile ? imageFile.mimetype : '';
+                    if (mimetype.indexOf('image/') >= 0 || mimetype.indexOf('video/') >= 0) {
+                        // The name of the input field (i.e. "sampleFile") is used to retrieve the uploaded file
+                        console.log('type: ', imageFile, imageFile.mimetype);
+                        var uploadPath = __dirname + "/public/images/image.png";
+                        if (mimetype.indexOf('video/') >= 0) {
+                            var ext = imageFile.name.match(/\.([^.]*?)$/);
+                            uploadPath = __dirname + ("/public/video/video" + ext[0]);
+                        }
+                        // Use the mv() method to place the file somewhere on your server
+                        imageFile.mv(uploadPath, function (err) {
+                            // if (err)
+                            // return params.status(500).send(err);
+                            // res.send({status: true, message: 'File uploaded!'});
+                        });
+                    }
+                    else {
+                        observer.next({ status: true, message: 'Only image and video files are accepted.' });
+                        observer.complete();
+                    }
+                }
+            }
+            catch (err) {
+                observer.error(err);
+            }
+        });
+    },
     score: function (params) {
         return new rxjs_1.Observable(function (observer) {
             var queryString = params.queryStringParameters;
@@ -108,7 +162,7 @@ var action = {
                 console.log('$@$@', s);
             });
             console.log('$$$tf', tfnode.getBackend());
-            confidentCutoff = +parseFloat(queryString.score).toFixed(2);
+            confidentCutoff = parseFloat(queryString.score);
             console.log(confidentCutoff);
             if (queryString.assetType === 'Image') {
                 ieam.renameFile(oldImage, imagePath + "/image.png");
@@ -161,10 +215,14 @@ var action = {
                                 _a.sent();
                                 images = ieam.getFiles(videoPath, /.jpg|.png/);
                                 console.log(images);
-                                ieam.inferenceVideo(images);
-                                console.log('helllo');
-                                observer.next("Hello!");
-                                observer.complete();
+                                ieam.inferenceVideo(images)
+                                    .subscribe({
+                                    complete: function () {
+                                        console.log('helllo');
+                                        observer.next("Hello!");
+                                        observer.complete();
+                                    }
+                                });
                                 return [2 /*return*/];
                         }
                     });
@@ -185,38 +243,193 @@ var mp3s = {
     'theForce': './public/media/may-the-force-be-with-you.mp3'
 };
 var ieam = {
-    inferenceVideo: function (files) {
-        try {
-            var $inference_1 = {};
-            files.forEach(function (imageFile) { return __awaiter(void 0, void 0, void 0, function () {
-                var image, decodedImage, inputTensor;
-                return __generator(this, function (_a) {
-                    if ((0, fs_1.existsSync)(imageFile)) {
-                        console.log(imageFile);
-                        image = (0, fs_1.readFileSync)(imageFile);
-                        decodedImage = tfnode.node.decodeImage(new Uint8Array(image), 3);
-                        inputTensor = decodedImage.expandDims(0);
-                        $inference_1[imageFile.replace('./public/', '/static/')] = (ieam.inference(inputTensor));
+    initialInference: function () {
+        return new rxjs_1.Observable(function (observer) {
+            try {
+                cameraDisabled = process.platform !== 'darwin' && !(0, fs_1.existsSync)('/dev/video0');
+                if (!(0, fs_1.existsSync)(currentModelPath)) {
+                    (0, fs_1.mkdirSync)(currentModelPath);
+                }
+                if (!(0, fs_1.existsSync)(newModelPath)) {
+                    (0, fs_1.mkdirSync)(newModelPath);
+                }
+                if (!(0, fs_1.existsSync)(oldModelPath)) {
+                    (0, fs_1.mkdirSync)(oldModelPath);
+                }
+                if (!(0, fs_1.existsSync)(oldImage)) {
+                    (0, fs_1.copyFileSync)(imagePath + "/backup.png", oldImage);
+                }
+                ieam.renameFile(oldImage, imagePath + "/image.png");
+                var video = ieam.getVideoFile(backupPath + "/video-old");
+                if (!video) {
+                    (0, fs_1.copyFileSync)(backupPath + "/video-bk.mp4", backupPath + "/video-old.mp4");
+                }
+                (0, fs_1.copyFileSync)(backupPath + "/video-old.mp4", videoPath + "/video.mp4");
+                var images = ieam.getFiles(videoPath, /.jpg|.png/);
+                ieam.inferenceVideo(images)
+                    .subscribe({
+                    complete: function () {
+                        console.log('$#$#$ inferencvideo');
+                        observer.complete();
                     }
-                    return [2 /*return*/];
                 });
-            }); });
-            (0, rxjs_1.forkJoin)($inference_1)
-                .subscribe({
-                next: function (value) {
-                    console.log(value);
-                    var json = Object.assign({}, { images: value, version: version, confidentCutoff: confidentCutoff, platform: process.platform + ":" + process.arch, cameraDisabled: cameraDisabled });
-                    jsonfile.writeFile(staticPath + "/video.json", json, { spaces: 2 });
-                    ieam.soundEffect(mp3s.theForce);
-                },
-                complete: function () {
-                    console.log('complete');
+            }
+            catch (e) {
+                console.log(e);
+                observer.complete();
+            }
+        });
+    },
+    extractVideo: function (file) {
+        return new rxjs_1.Observable(function (observer) {
+            try {
+                if ((0, fs_1.existsSync)(file)) {
+                    console.log('$video', file);
+                    ieam.deleteFiles(videoPath, /.jpg|.png/);
+                    var process_1 = new ffmpeg(file);
+                    process_1.then(function (video) {
+                        video.fnExtractFrameToJPG(videoPath, {
+                            every_n_frames: 150,
+                            number: 5,
+                            keep_pixel_aspect_ratio: true,
+                            keep_aspect_ratio: true,
+                            file_name: "image.jpg"
+                        }, function (err, files) {
+                            if (!err) {
+                                console.log('video file: ', files);
+                                observer.next(files);
+                                observer.complete();
+                            }
+                            else {
+                                console.log('video err: ', err);
+                                observer.next();
+                                observer.complete();
+                            }
+                        });
+                    }, function (err) {
+                        console.log('err: ', err);
+                        observer.next([]);
+                        observer.complete();
+                    });
+                }
+                else {
+                    console.log(file + " not found");
+                    observer.next([]);
+                    observer.complete();
+                }
+            }
+            catch (e) {
+                console.log('error: ', e.msg);
+                observer.next([]);
+                observer.complete();
+            }
+        });
+    },
+    observerReturn: function (observer, data) {
+        observer.next(data);
+        observer.complete();
+    },
+    checkVideo: function () {
+        try {
+            var video = ieam.getVideoFile(videoPath + "/video");
+            if (!video) {
+                return;
+            }
+            console.log('here');
+            ieam.extractVideo(video)
+                .subscribe(function (files) {
+                if (files.length > 0) {
+                    var images = files.filter(function (f) { return f.indexOf('.jpg') > 0; });
+                    var video_1 = files.filter(function (f) { return f.indexOf('.jpg') < 0; });
+                    if ((0, fs_1.existsSync)(video_1[0])) {
+                        console.log(video_1[0]);
+                        (0, fs_1.copyFileSync)(video_1[0], './public/backup/video-old.mp4');
+                        (0, fs_1.unlinkSync)(video_1[0]);
+                    }
+                    ieam.inferenceVideo(images);
                 }
             });
         }
         catch (e) {
             console.log(e);
         }
+    },
+    deleteFiles: function (srcDir, ext) {
+        var files = (0, fs_1.readdirSync)(srcDir);
+        files.forEach(function (file) {
+            if (ext && file.match(ext)) {
+                (0, fs_1.unlinkSync)(videoPath + "/" + file);
+            }
+        });
+    },
+    removeFiles: function (srcDir) {
+        return new rxjs_1.Observable(function (observer) {
+            var arg = "rm -rf " + srcDir + "/*";
+            exec(arg, { maxBuffer: 1024 * 2000 }, function (err, stdout, stderr) {
+                if (!err) {
+                    observer.next();
+                    observer.complete();
+                }
+                else {
+                    console.log(err);
+                    observer.next();
+                    observer.complete();
+                }
+            });
+        });
+    },
+    getVideoFile: function (file) {
+        var video = undefined;
+        videoFormat.every(function (ext) {
+            var v = "" + file + ext;
+            if ((0, fs_1.existsSync)(v)) {
+                video = v;
+                return false;
+            }
+            else {
+                return true;
+            }
+        });
+        return video;
+    },
+    inferenceVideo: function (files) {
+        return new rxjs_1.Observable(function (observer) {
+            try {
+                var $inference_1 = {};
+                var result_1;
+                files.forEach(function (imageFile) { return __awaiter(void 0, void 0, void 0, function () {
+                    var image, decodedImage, inputTensor;
+                    return __generator(this, function (_a) {
+                        if ((0, fs_1.existsSync)(imageFile)) {
+                            console.log(imageFile);
+                            image = (0, fs_1.readFileSync)(imageFile);
+                            decodedImage = tfnode.node.decodeImage(new Uint8Array(image), 3);
+                            inputTensor = decodedImage.expandDims(0);
+                            $inference_1[imageFile.replace('./public/', '/static/')] = (ieam.inference(inputTensor));
+                        }
+                        return [2 /*return*/];
+                    });
+                }); });
+                (0, rxjs_1.forkJoin)($inference_1)
+                    .subscribe({
+                    next: function (value) {
+                        result_1 = value;
+                    },
+                    complete: function () {
+                        console.log('$#@ ', result_1);
+                        var json = Object.assign({}, { images: result_1, version: version, videoSrc: videoSrc + "?" + Date.now(), confidentCutoff: confidentCutoff, platform: process.platform + ":" + process.arch, cameraDisabled: cameraDisabled, remoteCamerasOn: process.env.npm_config_remoteCamerasOn });
+                        jsonfile.writeFileSync(staticPath + "/video.json", json, { spaces: 2 });
+                        ieam.soundEffect(mp3s.theForce);
+                        console.log('complete');
+                        observer.complete();
+                    }
+                });
+            }
+            catch (e) {
+                console.log(e);
+                observer.complete();
+            }
+        });
     },
     soundEffect: function (mp3) {
         console.log(mp3);
@@ -245,7 +458,6 @@ var ieam = {
                 case 0:
                     _a.trys.push([0, 4, , 5]);
                     startTime = tfnode.util.now();
-                    console.log('$$$model', model);
                     if (!!model) return [3 /*break*/, 2];
                     return [4 /*yield*/, tfnode.node.loadSavedModel(modelPath)];
                 case 1:
@@ -294,7 +506,7 @@ var ieam = {
                     });
                 }
             }
-            console.log('predictions:', predictions.length, predictions[0]);
+            // console.log('predictions:', predictions.length, predictions[0]);
             console.log('time took: ', elapsedTime);
             console.log('build json...');
             observer.next({ bbox: predictions, elapsedTime: elapsedTime });

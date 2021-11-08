@@ -22,4 +22,5 @@ export interface Params {
   score: string;
   assetType: string;
   queryStringParameters: any;
+  files: any;
 }

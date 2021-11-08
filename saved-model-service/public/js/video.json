@@ -73,7 +73,7 @@
           "detectedScore": "0.85"
         }
       ],
-      "elapsedTime": 231.16357100009918
+      "elapsedTime": 246.74136996269226
     },
     "/static/video/image_2.jpg": {
       "bbox": [
@@ -148,15 +148,15 @@
           "detectedScore": "0.91"
         }
       ],
-      "elapsedTime": 256.44290697574615
+      "elapsedTime": 230.2243640422821
     }
   },
   "version": {
     "name": "Demo model",
     "version": "2.0.0"
   },
-  "videoSrc": "/static/backup/video-old.mp4?1636066441311",
-  "confidentCutoff": "0.85",
+  "videoSrc": "/static/backup/video-old.mp4?1636384026394",
+  "confidentCutoff": 0.85,
   "platform": "darwin:x64",
   "cameraDisabled": false,
   "remoteCamerasOn": "false"

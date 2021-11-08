@@ -25,6 +25,10 @@ functions:
       - http:
           path: /score/{pathvar+}
           method: get
+      - http:
+          method: post
+          path: /upload
+          cors: true
   static:
     handler: src/static.handler
     events:

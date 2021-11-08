@@ -163,7 +163,7 @@ export class AppComponent implements OnInit, AfterViewInit {
         console.log(data)
         if(data) {
           this.prevJson = data;
-          this.cutoff = ''+this.prevJson.confidentCutoff;
+          this.cutoff = ''+this.prevJson.confidentCutoff.toFixed(2);
           this.isServerCameraDisabled = this.prevJson.cameraDisabled === 'true' || this.prevJson.cameraDisabled === true;
           this.camerasOn = this.prevJson.remoteCamerasOn === 'true' || this.prevJson.remoteCamerasOn === true;
           if(this.assetType === 'Video') {
