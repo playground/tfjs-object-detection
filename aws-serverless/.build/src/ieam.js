@@ -50,7 +50,6 @@ var ffmpeg = require('ffmpeg');
 var cp = require('child_process'), exec = cp.exec;
 var clientFilePath = path.join(process.cwd(), './public/');
 var fileHandler = new StaticFileHandler(clientFilePath);
-var model;
 var handler = function (params, context, callback) {
     if (params.body && params.body.indexOf('form-data') < 0) {
         params.body = params.body ? JSON.parse(params.body) : null;
@@ -80,26 +79,6 @@ var handler = function (params, context, callback) {
     }
 };
 exports.handler = handler;
-var labels;
-var version;
-var intervalMS = 10000;
-var cycles = 0;
-var count = 0;
-var videoFormat = ['.mp4', '.avi', '.webm'];
-var videoSrc = '/static/backup/video-old.mp4';
-var cameraDisabled = true;
-var confidentCutoff = 0.85;
-var currentModelPath = './model';
-var imagePath = './public/images';
-var newModelPath = './model-new';
-var oldModelPath = './model-old';
-var staticPath = './public/js';
-var mmsPath = '/mms-shared';
-var localPath = './local-shared';
-var videoPath = './public/video';
-var backupPath = './public/backup';
-var oldImage = imagePath + "/image-old.png";
-var sharedPath = '';
 var action = {
     exec: function (params) {
         try {
@@ -129,6 +108,27 @@ var action = {
         });
     }
 };
+var model;
+var labels;
+var version;
+var intervalMS = 10000;
+var cycles = 0;
+var count = 0;
+var videoFormat = ['.mp4', '.avi', '.webm'];
+var videoSrc = '/static/backup/video-old.mp4';
+var cameraDisabled = true;
+var confidentCutoff = 0.85;
+var currentModelPath = './model';
+var imagePath = './public/images';
+var newModelPath = './model-new';
+var oldModelPath = './model-old';
+var staticPath = './public/js';
+var mmsPath = '/mms-shared';
+var localPath = './local-shared';
+var videoPath = './public/video';
+var backupPath = './public/backup';
+var oldImage = imagePath + "/image-old.png";
+var sharedPath = '';
 var mp3s = {
     'snapshot': './public/media/audio-snap.mp3',
     'gotMail': './public/media/youve-got-mail-sound.mp3',

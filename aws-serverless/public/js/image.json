@@ -1,15 +1,26 @@
 {
   "images": {
     "/static/images/image-old.png": {
-      "bbox": [],
-      "elapsedTime": 202.19902700185776
+      "bbox": [
+        {
+          "detectedBox": [
+            "0.67",
+            "0.86",
+            "0.77",
+            "1.00"
+          ],
+          "detectedClass": "mask",
+          "detectedScore": "0.87"
+        }
+      ],
+      "elapsedTime": 180.92257000505924
     }
   },
   "version": {
     "name": "Demo model",
     "version": "2.0.0"
   },
-  "confidentCutoff": 0.9,
+  "confidentCutoff": 0.85,
   "platform": "darwin:x64",
   "cameraDisabled": true
 }
