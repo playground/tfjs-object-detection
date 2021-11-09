@@ -1,9 +1,12 @@
 import { Observable, of, forkJoin } from 'rxjs';
-import { existsSync, renameSync, copyFileSync, unlinkSync, readFileSync, readdirSync, mkdirSync } from 'fs';
+import { existsSync, renameSync, copyFileSync, unlinkSync, readFileSync, readdirSync, writeFileSync, mkdirSync } from 'fs';
 import { Messenger } from './messenger';
 import { Params } from './params';
 import path = require('path');
 import StaticFileHandler = require('serverless-aws-static-file-handler');
+import { Stream } from 'stream';
+import * as readline from 'readline';
+const queryString = require('querystring');
 const tfnode = require('@tensorflow/tfjs-node');
 const jsonfile = require('jsonfile');
 const player = require('play-sound')();
@@ -16,10 +19,13 @@ const fileHandler = new StaticFileHandler(clientFilePath);
 let model;
 
 export const handler = (params: Params, context, callback) => {
-  params.body = params.body ? JSON.parse(params.body) : null;
-  console.log('$$$!!!params', params.path, params.queryStringParameters.score, params.queryStringParameters.assetType)
-  params.action = params.body ? params.body.action : params.path.replace(/^\/|\/$/g, '');
-  console.log('$$$!!!params', params.path, params.action, process.cwd(), clientFilePath)
+  if(params.body && params.body.indexOf('form-data') < 0) {
+    params.body = params.body ? JSON.parse(params.body) : null;
+    params.action = params.body ? params.body.action : params.path.replace(/^\/|\/$/g, '');
+  } else {
+    params.action = params.path.replace(/^\/|\/$/g, '');
+  }
+  console.log('$$$!!!params', params.path, params.action, clientFilePath)
   if(!params.action) {
     console.log('$$$###params', params.path, params.action, process.cwd(), clientFilePath)
     params.path = 'index.html';
@@ -64,13 +70,6 @@ let action = {
   exec: (params: Params) => {
     try {
       console.log('$$$params', params.action, params.score, process.cwd())
-      // ieam.initialInference()
-      // .subscribe({
-      //   complete: () => {
-      //     console.log('$$$###params', params.path, params.action, process.cwd(), clientFilePath)
-      //     return (action[params.action] || action.default)(params);  
-      //   }
-      // })
       return (action[params.action] || action.default)(params);  
     } catch(e) {
       return of({data: e});
@@ -83,40 +82,64 @@ let action = {
     });
   },
   upload: (params: Params) => {
+    return ieam.upload(params);
+  },  
+  score: (params: Params) => {
+    return ieam.score(params);
+  },
+  default: (params: Params) => {
+    return new Observable((observer) => {
+      observer.next(`Method ${params.action} not found.`);
+      observer.complete();
+    });
+  }
+}
+
+const mp3s = {
+  'snapshot': './public/media/audio-snap.mp3',
+  'gotMail': './public/media/youve-got-mail-sound.mp3',
+  'theForce': './public/media/may-the-force-be-with-you.mp3' 
+};
+
+let ieam = {
+  upload: (params: Params) => {
     return new Observable((observer) => {
       try {
-        console.log('#$@#$@', params.files, params)
-        if (!params.files || Object.keys(params.files).length === 0) {
-          // return params.status(400).send('No files were uploaded.');
+        let body = params.body;
+        let content = queryString.parse(body, '\r\n', ':');
+        if(content['Content-Type'].indexOf('image') != -1) {
+          console.log(content['Content-Type'])
+          let entireData = body.toString();           
+          let contentType = content['Content-Type'].substring(1); 
+  
+          //Get the location of the start of the binary file, 
+          //which happens to be where contentType ends
+          let upperBoundary = entireData.indexOf(contentType) + contentType.length; 
+          let data = entireData.substring(upperBoundary); 
+  
+          //replace trailing and starting spaces 
+          let cleanData = data.replace(/^\s\s*/, '').replace(/\s\s*$/, '');
+  
+          //Cut the extra things at the end of the data (Webkit stuff)
+          let binaryData = cleanData.substring(0, cleanData.indexOf('------WebKitFormBoundary'));
+          writeFileSync(`${imagePath}/image.png`, binaryData, 'binary');
+          ieam.checkImage()
+          .subscribe({
+            complete: () => {
+              observer.next('Image captured.')
+              observer.complete()
+            }  
+          })
         } else {
-          let imageFile = params.files.imageFile;
-          const mimetype = imageFile ? imageFile.mimetype : '';
-          if(mimetype.indexOf('image/') >= 0 || mimetype.indexOf('video/') >= 0) {
-            // The name of the input field (i.e. "sampleFile") is used to retrieve the uploaded file
-            console.log('type: ', imageFile, imageFile.mimetype)
-            let uploadPath = __dirname + `/public/images/image.png`;
-            if(mimetype.indexOf('video/') >= 0) {
-              let ext = imageFile.name.match(/\.([^.]*?)$/);
-              uploadPath = __dirname + `/public/video/video${ext[0]}`;
-            }
-            
-            // Use the mv() method to place the file somewhere on your server
-            imageFile.mv(uploadPath, (err: any) => {
-              // if (err)
-                // return params.status(500).send(err);
-        
-              // res.send({status: true, message: 'File uploaded!'});
-            });
-          } else {
-            observer.next({status: true, message: 'Only image and video files are accepted.'});
-            observer.complete();
-          }
-        }  
+          console.log('invalid file type');
+          observer.next('Invalid file type')
+          observer.complete();
+        }
       } catch(err) {
         observer.error(err);
       }
     });
-  },  
+  },
   score: (params: Params) => {
     return new Observable((observer) => {
       const queryString = params.queryStringParameters;
@@ -179,21 +202,40 @@ let action = {
       } 
     });
   },
-  default: (params: Params) => {
+  checkImage: () => {
     return new Observable((observer) => {
-      observer.next(`Method ${params.action} not found.`);
-      observer.complete();
-    });
-  }
-}
+      (async () => {
+        await ieam.loadModel(currentModelPath);
+        let imageFile = `${imagePath}/image.png`;
+        if(!existsSync(imageFile)) {
+          imageFile = `${imagePath}/image.jpg`;
+        }
+        if(existsSync(imageFile)) {
+          try {
+            console.log(imageFile)
+            const image = readFileSync(imageFile);
+            const decodedImage = tfnode.node.decodeImage(new Uint8Array(image), 3);
+            const inputTensor = decodedImage.expandDims(0);
+            ieam.inference(inputTensor)
+            .subscribe((json) => {
+              let images = {};
+              images['/static/images/image-old.png'] = json;
+              json = Object.assign({images: images, version: version, confidentCutoff: confidentCutoff, platform: `${process.platform}:${process.arch}`, cameraDisabled: cameraDisabled, remoteCamerasOn: process.env.npm_config_remoteCamerasOn});
+              jsonfile.writeFile(`${staticPath}/image.json`, json, {spaces: 2});
+              ieam.renameFile(imageFile, `${imagePath}/image-old.png`);
 
-const mp3s = {
-  'snapshot': './public/media/audio-snap.mp3',
-  'gotMail': './public/media/youve-got-mail-sound.mp3',
-  'theForce': './public/media/may-the-force-be-with-you.mp3' 
-};
-
-let ieam = {
+              observer.next(`Hello!`);
+              observer.complete();
+            });  
+          } catch(e) {
+            console.log(e);
+            observer.next(`Hello!`);
+            observer.complete();
+          }
+        }
+      })(); 
+    })
+  },
   initialInference: () => {
     return new Observable((observer) => {
       try {

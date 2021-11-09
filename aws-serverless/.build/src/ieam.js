@@ -42,6 +42,7 @@ var fs_1 = require("fs");
 var messenger_1 = require("./messenger");
 var path = require("path");
 var StaticFileHandler = require("serverless-aws-static-file-handler");
+var queryString = require('querystring');
 var tfnode = require('@tensorflow/tfjs-node');
 var jsonfile = require('jsonfile');
 var player = require('play-sound')();
@@ -51,10 +52,14 @@ var clientFilePath = path.join(process.cwd(), './public/');
 var fileHandler = new StaticFileHandler(clientFilePath);
 var model;
 var handler = function (params, context, callback) {
-    params.body = params.body ? JSON.parse(params.body) : null;
-    console.log('$$$!!!params', params.path, params.queryStringParameters.score, params.queryStringParameters.assetType);
-    params.action = params.body ? params.body.action : params.path.replace(/^\/|\/$/g, '');
-    console.log('$$$!!!params', params.path, params.action, process.cwd(), clientFilePath);
+    if (params.body && params.body.indexOf('form-data') < 0) {
+        params.body = params.body ? JSON.parse(params.body) : null;
+        params.action = params.body ? params.body.action : params.path.replace(/^\/|\/$/g, '');
+    }
+    else {
+        params.action = params.path.replace(/^\/|\/$/g, '');
+    }
+    console.log('$$$!!!params', params.path, params.action, clientFilePath);
     if (!params.action) {
         console.log('$$$###params', params.path, params.action, process.cwd(), clientFilePath);
         params.path = 'index.html';
@@ -99,13 +104,6 @@ var action = {
     exec: function (params) {
         try {
             console.log('$$$params', params.action, params.score, process.cwd());
-            // ieam.initialInference()
-            // .subscribe({
-            //   complete: () => {
-            //     console.log('$$$###params', params.path, params.action, process.cwd(), clientFilePath)
-            //     return (action[params.action] || action.default)(params);  
-            //   }
-            // })
             return (action[params.action] || action["default"])(params);
         }
         catch (e) {
@@ -119,34 +117,54 @@ var action = {
         });
     },
     upload: function (params) {
+        return ieam.upload(params);
+    },
+    score: function (params) {
+        return ieam.score(params);
+    },
+    "default": function (params) {
+        return new rxjs_1.Observable(function (observer) {
+            observer.next("Method " + params.action + " not found.");
+            observer.complete();
+        });
+    }
+};
+var mp3s = {
+    'snapshot': './public/media/audio-snap.mp3',
+    'gotMail': './public/media/youve-got-mail-sound.mp3',
+    'theForce': './public/media/may-the-force-be-with-you.mp3'
+};
+var ieam = {
+    upload: function (params) {
         return new rxjs_1.Observable(function (observer) {
             try {
-                console.log('#$@#$@', params.files, params);
-                if (!params.files || Object.keys(params.files).length === 0) {
-                    // return params.status(400).send('No files were uploaded.');
+                var body = params.body;
+                var content = queryString.parse(body, '\r\n', ':');
+                if (content['Content-Type'].indexOf('image') != -1) {
+                    console.log(content['Content-Type']);
+                    var entireData = body.toString();
+                    var contentType = content['Content-Type'].substring(1);
+                    //Get the location of the start of the binary file, 
+                    //which happens to be where contentType ends
+                    var upperBoundary = entireData.indexOf(contentType) + contentType.length;
+                    var data = entireData.substring(upperBoundary);
+                    //replace trailing and starting spaces 
+                    var cleanData = data.replace(/^\s\s*/, '').replace(/\s\s*$/, '');
+                    //Cut the extra things at the end of the data (Webkit stuff)
+                    var binaryData = cleanData.substring(0, cleanData.indexOf('------WebKitFormBoundary'));
+                    (0, fs_1.writeFileSync)(imagePath + "/image.png", binaryData, 'binary');
+                    ieam.checkImage()
+                        .subscribe({
+                        complete: function () {
+                            observer.next('Image captured.');
+                            observer.complete();
+                        }
+                    });
                 }
                 else {
-                    var imageFile = params.files.imageFile;
-                    var mimetype = imageFile ? imageFile.mimetype : '';
-                    if (mimetype.indexOf('image/') >= 0 || mimetype.indexOf('video/') >= 0) {
-                        // The name of the input field (i.e. "sampleFile") is used to retrieve the uploaded file
-                        console.log('type: ', imageFile, imageFile.mimetype);
-                        var uploadPath = __dirname + "/public/images/image.png";
-                        if (mimetype.indexOf('video/') >= 0) {
-                            var ext = imageFile.name.match(/\.([^.]*?)$/);
-                            uploadPath = __dirname + ("/public/video/video" + ext[0]);
-                        }
-                        // Use the mv() method to place the file somewhere on your server
-                        imageFile.mv(uploadPath, function (err) {
-                            // if (err)
-                            // return params.status(500).send(err);
-                            // res.send({status: true, message: 'File uploaded!'});
-                        });
-                    }
-                    else {
-                        observer.next({ status: true, message: 'Only image and video files are accepted.' });
-                        observer.complete();
-                    }
+                    console.log('invalid file type');
+                    observer.next('Invalid file type');
+                    observer.complete();
                 }
             }
             catch (err) {
@@ -230,19 +248,48 @@ var action = {
             }
         });
     },
-    "default": function (params) {
+    checkImage: function () {
         return new rxjs_1.Observable(function (observer) {
-            observer.next("Method " + params.action + " not found.");
-            observer.complete();
+            (function () { return __awaiter(void 0, void 0, void 0, function () {
+                var imageFile, image, decodedImage, inputTensor;
+                return __generator(this, function (_a) {
+                    switch (_a.label) {
+                        case 0: return [4 /*yield*/, ieam.loadModel(currentModelPath)];
+                        case 1:
+                            _a.sent();
+                            imageFile = imagePath + "/image.png";
+                            if (!(0, fs_1.existsSync)(imageFile)) {
+                                imageFile = imagePath + "/image.jpg";
+                            }
+                            if ((0, fs_1.existsSync)(imageFile)) {
+                                try {
+                                    console.log(imageFile);
+                                    image = (0, fs_1.readFileSync)(imageFile);
+                                    decodedImage = tfnode.node.decodeImage(new Uint8Array(image), 3);
+                                    inputTensor = decodedImage.expandDims(0);
+                                    ieam.inference(inputTensor)
+                                        .subscribe(function (json) {
+                                        var images = {};
+                                        images['/static/images/image-old.png'] = json;
+                                        json = Object.assign({ images: images, version: version, confidentCutoff: confidentCutoff, platform: process.platform + ":" + process.arch, cameraDisabled: cameraDisabled, remoteCamerasOn: process.env.npm_config_remoteCamerasOn });
+                                        jsonfile.writeFile(staticPath + "/image.json", json, { spaces: 2 });
+                                        ieam.renameFile(imageFile, imagePath + "/image-old.png");
+                                        observer.next("Hello!");
+                                        observer.complete();
+                                    });
+                                }
+                                catch (e) {
+                                    console.log(e);
+                                    observer.next("Hello!");
+                                    observer.complete();
+                                }
+                            }
+                            return [2 /*return*/];
+                    }
+                });
+            }); })();
         });
-    }
-};
-var mp3s = {
-    'snapshot': './public/media/audio-snap.mp3',
-    'gotMail': './public/media/youve-got-mail-sound.mp3',
-    'theForce': './public/media/may-the-force-be-with-you.mp3'
-};
-var ieam = {
+    },
     initialInference: function () {
         return new rxjs_1.Observable(function (observer) {
             try {

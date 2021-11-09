@@ -4,36 +4,16 @@
       "bbox": [
         {
           "detectedBox": [
-            "0.43",
-            "0.26",
-            "1.00",
-            "0.53"
+            "0.59",
+            "0.83",
+            "0.67",
+            "1.00"
           ],
-          "detectedClass": "vest",
-          "detectedScore": "1.00"
-        },
-        {
-          "detectedBox": [
-            "0.02",
-            "0.33",
-            "0.41",
-            "0.53"
-          ],
-          "detectedClass": "hardhat",
-          "detectedScore": "1.00"
-        },
-        {
-          "detectedBox": [
-            "0.01",
-            "0.24",
-            "1.00",
-            "0.58"
-          ],
-          "detectedClass": "person",
-          "detectedScore": "0.99"
+          "detectedClass": "mask",
+          "detectedScore": "0.88"
         }
       ],
-      "elapsedTime": 296.4955919981003
+      "elapsedTime": 238.14169600233436
     }
   },
   "version": {
