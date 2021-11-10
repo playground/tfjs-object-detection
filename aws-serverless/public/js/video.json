@@ -11,9 +11,19 @@
           ],
           "detectedClass": "hardhat",
           "detectedScore": "1.00"
+        },
+        {
+          "detectedBox": [
+            "0.14",
+            "0.16",
+            "1.00",
+            "0.57"
+          ],
+          "detectedClass": "person",
+          "detectedScore": "0.85"
         }
       ],
-      "elapsedTime": 8051.020444989204
+      "elapsedTime": 183.94541600346565
     },
     "/static/video/image_2.jpg": {
       "bbox": [
@@ -38,7 +48,7 @@
           "detectedScore": "0.99"
         }
       ],
-      "elapsedTime": 189.37895399332047
+      "elapsedTime": 183.88726098835468
     },
     "/static/video/image_3.jpg": {
       "bbox": [
@@ -61,9 +71,19 @@
           ],
           "detectedClass": "mask",
           "detectedScore": "0.99"
+        },
+        {
+          "detectedBox": [
+            "0.11",
+            "0.21",
+            "1.00",
+            "0.56"
+          ],
+          "detectedClass": "person",
+          "detectedScore": "0.86"
         }
       ],
-      "elapsedTime": 190.19771200418472
+      "elapsedTime": 183.1177060008049
     },
     "/static/video/image_4.jpg": {
       "bbox": [
@@ -86,17 +106,27 @@
           ],
           "detectedClass": "mask",
           "detectedScore": "0.99"
+        },
+        {
+          "detectedBox": [
+            "0.11",
+            "0.18",
+            "1.00",
+            "0.58"
+          ],
+          "detectedClass": "person",
+          "detectedScore": "0.85"
         }
       ],
-      "elapsedTime": 194.78774601221085
+      "elapsedTime": 207.22747498750687
     }
   },
   "version": {
     "name": "Demo model",
     "version": "2.0.0"
   },
-  "videoSrc": "/static/backup/video-old.mp4?1636499004109",
-  "confidentCutoff": 0.95,
+  "videoSrc": "/static/backup/video-old.mp4?1636508043235",
+  "confidentCutoff": 0.85,
   "platform": "darwin:x64",
-  "cameraDisabled": true
+  "cameraDisabled": false
 }

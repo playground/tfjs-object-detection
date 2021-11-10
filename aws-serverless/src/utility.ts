@@ -20,7 +20,7 @@ let videoFormat = ['.mp4', '.avi', '.webm'];
 let videoSrc = '/static/backup/video-old.mp4';
 let cameraDisabled = true;
 let confidentCutoff = 0.85;
-const currentModelPath = './model';
+export const currentModelPath = './model';
 const imagePath = './public/images';
 const newModelPath = './model-new';
 const oldModelPath = './model-old';
@@ -39,6 +39,21 @@ const mp3s = {
 };
 
 export const ieam = {
+  imageVideoExist: () => {
+    return new Observable((observer) => {
+      if(!existsSync(`${oldImage}`) || !ieam.getVideoFile(`${backupPath}/video-old`)) {
+        (async () => {
+          await ieam.loadModel(currentModelPath);      
+          ieam.initialInference()
+          .subscribe({
+            complete: () => observer.complete()
+          })
+        })();
+      } else {
+        observer.complete()
+      }
+    });  
+  },
   upload: (params: Params) => {
     return new Observable((observer) => {
       try {
@@ -85,7 +100,7 @@ export const ieam = {
         console.log('$@$@', s)
       })
       console.log('$$$tf', tfnode.getBackend())
-      confidentCutoff = parseFloat(queryString.score);
+      confidentCutoff = queryString.score ? parseFloat(queryString.score) : confidentCutoff;
       console.log(confidentCutoff)
 
       if(queryString.assetType === 'Image') {
@@ -190,20 +205,25 @@ export const ieam = {
           copyFileSync(`${imagePath}/backup.png`, oldImage)
         }
         ieam.renameFile(oldImage, `${imagePath}/image.png`);
-        let video = ieam.getVideoFile(`${backupPath}/video-old`);
-        if(!video) {
-          copyFileSync(`${backupPath}/video-bk.mp4`, `${backupPath}/video-old.mp4`);
-        }  
-        copyFileSync(`${backupPath}/video-old.mp4`, `${videoPath}/video.mp4`);
-
-        let images = ieam.getFiles(videoPath, /.jpg|.png/);
-        ieam.inferenceVideo(images)
+        ieam.checkImage()
         .subscribe({
           complete: () => {
-            console.log('$#$#$ inferencvideo')
-            observer.complete();
+            let video = ieam.getVideoFile(`${backupPath}/video-old`);
+            if(!video) {
+              copyFileSync(`${backupPath}/video-bk.mp4`, `${backupPath}/video-old.mp4`);
+            }  
+            copyFileSync(`${backupPath}/video-old.mp4`, `${videoPath}/video.mp4`);
+    
+            let images = ieam.getFiles(videoPath, /.jpg|.png/);
+            ieam.inferenceVideo(images)
+            .subscribe({
+              complete: () => {
+                console.log('$#$#$ inferencvideo')
+                observer.complete();
+              }
+            })            
           }
-        })        
+        })
       } catch(e) {
         console.log(e);
         observer.complete();

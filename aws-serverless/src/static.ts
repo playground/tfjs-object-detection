@@ -1,6 +1,6 @@
 import path = require('path');
-import { Messenger } from './messenger';
 import { Params } from './params';
+import { ieam } from './utility';
 
 import StaticFileHandler = require('serverless-aws-static-file-handler');
 
@@ -11,6 +11,11 @@ export const handler = (params: Params, context, callback) => {
   console.log('$$$params', params.path, process.cwd(), clientFilePath)
   if(params.path === '/') {
     params.path = 'index.html';
+    ieam.imageVideoExist()
+    .subscribe({
+      complete: () => callback(null, fileHandler.get(params, context))
+    })
+  } else {
+    callback(null, fileHandler.get(params, context))
   }
-  callback(null, fileHandler.get(params, context));
 }

@@ -47,7 +47,7 @@
             <input class="submit" type='submit' value='Upload' />
           </button>
           <span  class="button_spacer">
-            <button mat-icon-button color="primary" (click)="toggleClientCamera($event)" title="Toggle client camera" [disabled]="isCameraDisabled">
+            <button mat-icon-button color="primary" (dblclick)="doubleClick($event)" (click)="toggleClientCamera($event)" title="Toggle client camera" [disabled]="isCameraDisabled">
               <mat-icon #front_camera>camera_front</mat-icon>
             </button>
             <button mat-icon-button color="primary" (click)="toggleCamera($event)" title="Toggle camera" [disabled]="isServerCameraDisabled">

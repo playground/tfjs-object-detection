@@ -296,6 +296,10 @@ export class AppComponent implements OnInit, AfterViewInit {
   public get triggerObservable(): Observable<void> {
     return this.trigger.asObservable();
   }
+  doubleClick(evt: Event) {
+    evt.preventDefault();
+    this.frontCamera.nativeElement.innerHTML = 'camera_front';
+  }
   toggleClientCamera(evt: Event) {
     evt.preventDefault();
     if(this.camera.nativeElement.innerHTML !== 'camera_alt') {
