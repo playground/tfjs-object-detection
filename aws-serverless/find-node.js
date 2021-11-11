@@ -16,7 +16,7 @@ const find = (name) => {
       if(!list.find(exist)) {
         clearInterval(timer);
         console.log('restarting serverless')
-        let child = exec('serverless offline start --allowCache', {maxBuffer: 1024 * 2000}, (err, stdout, stderr) => {
+        let child = exec('serverless offline start --allowCache --host "0.0.0.0"', {maxBuffer: 1024 * 2000}, (err, stdout, stderr) => {
         });
         child.stdout.pipe(process.stdout);
         child.on('data', (data) => {
