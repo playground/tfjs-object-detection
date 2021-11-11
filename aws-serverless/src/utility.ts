@@ -25,18 +25,69 @@ const imagePath = './public/images';
 const newModelPath = './model-new';
 const oldModelPath = './model-old';
 const staticPath = './public/js';
-const mmsPath = '/mms-shared';
-const localPath = './local-shared';
+export const mmsPath = '/mms-shared';
+export const localPath = './local-shared';
 const videoPath = './public/video';
 const backupPath = './public/backup';
 const oldImage = `${imagePath}/image-old.png`;
-let sharedPath = '';
+export let sharedPath = '';
 
 const mp3s = {
   'snapshot': './public/media/audio-snap.mp3',
   'gotMail': './public/media/youve-got-mail-sound.mp3',
   'theForce': './public/media/may-the-force-be-with-you.mp3' 
 };
+
+export const util = {
+  checkMMS: () => {
+    try {
+      let list;
+      let config;
+      if(existsSync(mmsPath)) {
+        list = readdirSync(mmsPath);
+        list = list.filter(item => /(\.zip)$/.test(item));
+        sharedPath = mmsPath;  
+      } else if(existsSync(localPath)) {
+        list = readdirSync(localPath);
+        config = list.filter(item => item === 'config.json');
+        list = list.filter(item => /(\.zip)$/.test(item));
+        sharedPath = localPath;
+      }
+      return list;  
+    } catch(e) {
+      console.log(e)
+    }
+  },
+  unzipMMS: (files: any) => {
+    return new Observable((observer) => {
+      let arg = '';
+      console.log('list', files);
+      files.forEach((file) => {
+        if(file === 'model.zip') {
+          arg = `unzip -o ${sharedPath}/${file} -d ${newModelPath}`;
+        } else if(file === 'image.zip') {
+          arg = `unzip -o ${sharedPath}/${file} -d ${imagePath}`;
+        } else {
+          observer.next();
+          observer.complete();
+        }
+        exec(arg, {maxBuffer: 1024 * 2000}, (err, stdout, stderr) => {
+          if(existsSync(`${sharedPath}/${file}`)) {
+            unlinkSync(`${sharedPath}/${file}`);
+          }
+          if(!err) {
+            observer.next();
+            observer.complete();
+          } else {
+            console.log(err);
+            observer.next();
+            observer.complete();
+          }
+        });
+      })
+    });    
+  }
+}
 
 export const ieam = {
   imageVideoExist: () => {

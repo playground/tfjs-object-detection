@@ -9,7 +9,6 @@
             "1.00",
             "0.53"
           ],
-          "detectedClass": "vest",
           "detectedScore": "1.00"
         },
         {
@@ -19,7 +18,7 @@
             "0.41",
             "0.53"
           ],
-          "detectedClass": "hardhat",
+          "detectedClass": "hard-hat",
           "detectedScore": "1.00"
         },
         {
@@ -29,18 +28,17 @@
             "1.00",
             "0.58"
           ],
-          "detectedClass": "person",
           "detectedScore": "0.99"
         }
       ],
-      "elapsedTime": 268.9483280032873
+      "elapsedTime": 210.79700300097466
     }
   },
   "version": {
     "name": "Demo model",
-    "version": "2.0.0"
+    "version": "1.0.0"
   },
-  "confidentCutoff": 0.9,
+  "confidentCutoff": 0.85,
   "platform": "darwin:x64",
-  "cameraDisabled": false
+  "cameraDisabled": true
 }

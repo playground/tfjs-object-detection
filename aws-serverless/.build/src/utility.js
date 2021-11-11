@@ -36,7 +36,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 exports.__esModule = true;
-exports.ieam = exports.currentModelPath = void 0;
+exports.ieam = exports.util = exports.sharedPath = exports.localPath = exports.mmsPath = exports.currentModelPath = void 0;
 var rxjs_1 = require("rxjs");
 var fs_1 = require("fs");
 var queryString = require('querystring');
@@ -60,16 +60,71 @@ var imagePath = './public/images';
 var newModelPath = './model-new';
 var oldModelPath = './model-old';
 var staticPath = './public/js';
-var mmsPath = '/mms-shared';
-var localPath = './local-shared';
+exports.mmsPath = '/mms-shared';
+exports.localPath = './local-shared';
 var videoPath = './public/video';
 var backupPath = './public/backup';
 var oldImage = imagePath + "/image-old.png";
-var sharedPath = '';
+exports.sharedPath = '';
 var mp3s = {
     'snapshot': './public/media/audio-snap.mp3',
     'gotMail': './public/media/youve-got-mail-sound.mp3',
     'theForce': './public/media/may-the-force-be-with-you.mp3'
+};
+exports.util = {
+    checkMMS: function () {
+        try {
+            var list = void 0;
+            var config = void 0;
+            if ((0, fs_1.existsSync)(exports.mmsPath)) {
+                list = (0, fs_1.readdirSync)(exports.mmsPath);
+                list = list.filter(function (item) { return /(\.zip)$/.test(item); });
+                exports.sharedPath = exports.mmsPath;
+            }
+            else if ((0, fs_1.existsSync)(exports.localPath)) {
+                list = (0, fs_1.readdirSync)(exports.localPath);
+                config = list.filter(function (item) { return item === 'config.json'; });
+                list = list.filter(function (item) { return /(\.zip)$/.test(item); });
+                exports.sharedPath = exports.localPath;
+            }
+            return list;
+        }
+        catch (e) {
+            console.log(e);
+        }
+    },
+    unzipMMS: function (files) {
+        return new rxjs_1.Observable(function (observer) {
+            var arg = '';
+            console.log('list', files);
+            files.forEach(function (file) {
+                if (file === 'model.zip') {
+                    arg = "unzip -o " + exports.sharedPath + "/" + file + " -d " + newModelPath;
+                }
+                else if (file === 'image.zip') {
+                    arg = "unzip -o " + exports.sharedPath + "/" + file + " -d " + imagePath;
+                }
+                else {
+                    observer.next();
+                    observer.complete();
+                }
+                exec(arg, { maxBuffer: 1024 * 2000 }, function (err, stdout, stderr) {
+                    if ((0, fs_1.existsSync)(exports.sharedPath + "/" + file)) {
+                        (0, fs_1.unlinkSync)(exports.sharedPath + "/" + file);
+                    }
+                    if (!err) {
+                        observer.next();
+                        observer.complete();
+                    }
+                    else {
+                        console.log(err);
+                        observer.next();
+                        observer.complete();
+                    }
+                });
+            });
+        });
+    }
 };
 exports.ieam = {
     imageVideoExist: function () {
