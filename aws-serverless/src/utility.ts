@@ -411,21 +411,6 @@ export const ieam = {
       }
     });
   },
-  removeFiles: (srcDir) => {
-    return new Observable((observer) => {
-      let arg = `rm -rf ${srcDir}/*`;
-      exec(arg, {maxBuffer: 1024 * 2000}, (err, stdout, stderr) => {
-        if(!err) {
-          observer.next();
-          observer.complete();
-        } else {
-          console.log(err);
-          observer.next();
-          observer.complete();
-        }
-      });
-    });    
-  },
   getVideoFile: (file: string) => {
     let video = undefined;
     videoFormat.every((ext) => {
