@@ -61,7 +61,7 @@ export const util = {
   unzipMMS: (files: any) => {
     return new Observable((observer) => {
       let arg = '';
-      console.log('list', files);
+      console.log('list', files, sharedPath, newModelPath);
       files.forEach((file) => {
         if(file === 'model.zip') {
           arg = `unzip -o ${sharedPath}/${file} -d ${newModelPath}`;
@@ -76,11 +76,30 @@ export const util = {
             unlinkSync(`${sharedPath}/${file}`);
           }
           if(!err) {
-            observer.next();
-            observer.complete();
+            let newVersion = jsonfile.readFileSync(`${newModelPath}/assets/version.json`);
+            if(version && version.version === newVersion.version) {
+              ieam.removeFiles(newModelPath)
+              .subscribe(() => {
+                observer.complete();
+              });   
+            } else {
+              ieam.moveFiles(currentModelPath, oldModelPath)
+              .subscribe({
+                complete: () => ieam.moveFiles(newModelPath, currentModelPath)
+                  .subscribe({
+                    complete: () => {
+                      console.log('new model is available, restarting server...');
+                      observer.complete();
+                    },   
+                    error: (e) => {
+                      console.log(e);
+                      observer.complete(); 
+                    }
+                  }),  
+              })
+            }
           } else {
             console.log(err);
-            observer.next();
             observer.complete();
           }
         });
@@ -90,6 +109,39 @@ export const util = {
 }
 
 export const ieam = {
+  moveFiles: (srcDir, destDir) => {
+    return new Observable((observer) => {
+      let arg = `cp -r ${srcDir}/* ${destDir}`;
+      if(srcDir === newModelPath) {
+        arg += ` && rm -rf ${srcDir}/*`;
+      }
+      exec(arg, {maxBuffer: 1024 * 2000}, (err, stdout, stderr) => {
+        if(!err) {
+          observer.next();
+          observer.complete();
+        } else {
+          console.log(err);
+          observer.next();
+          observer.complete();
+        }
+      });
+    });    
+  },
+  removeFiles: (srcDir) => {
+    return new Observable((observer) => {
+      let arg = `rm -rf ${srcDir}/*`;
+      exec(arg, {maxBuffer: 1024 * 2000}, (err, stdout, stderr) => {
+        if(!err) {
+          observer.next();
+          observer.complete();
+        } else {
+          console.log(err);
+          observer.next();
+          observer.complete();
+        }
+      });
+    });    
+  },
   imageVideoExist: () => {
     return new Observable((observer) => {
       if(!existsSync(`${oldImage}`) || !ieam.getVideoFile(`${backupPath}/video-old`)) {

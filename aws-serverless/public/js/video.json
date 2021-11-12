@@ -13,7 +13,7 @@
           "detectedScore": "1.00"
         }
       ],
-      "elapsedTime": 6553.972247004509
+      "elapsedTime": 225.21055600047112
     },
     "/static/video/image_2.jpg": {
       "bbox": [
@@ -28,7 +28,7 @@
           "detectedScore": "1.00"
         }
       ],
-      "elapsedTime": 201.4147900044918
+      "elapsedTime": 242.42388099431992
     },
     "/static/video/image_3.jpg": {
       "bbox": [
@@ -43,7 +43,7 @@
           "detectedScore": "1.00"
         }
       ],
-      "elapsedTime": 201.83714801073074
+      "elapsedTime": 249.43598797917366
     },
     "/static/video/image_4.jpg": {
       "bbox": [
@@ -58,15 +58,15 @@
           "detectedScore": "1.00"
         }
       ],
-      "elapsedTime": 207.06422701478004
+      "elapsedTime": 198.2963690161705
     }
   },
   "version": {
     "name": "Demo model",
     "version": "1.0.0"
   },
-  "videoSrc": "/static/backup/video-old.mp4?1636652168405",
-  "confidentCutoff": 0.9,
+  "videoSrc": "/static/backup/video-old.mp4?1636677789418",
+  "confidentCutoff": 0.85,
   "platform": "darwin:x64",
   "cameraDisabled": true
 }

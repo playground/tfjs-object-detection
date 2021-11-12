@@ -6,13 +6,14 @@ exec = cp.exec;
 
 let timer;
 let intervalMS = 10000;
+let pid;
 
 const find = (name) => {
   return new Observable((observer) => {
     findProcess('name', name, true)
     .then(function (list) {
       console.log('there are now %s node process(es)', list.length);
-      // console.log(list)
+      console.log(list)
       if(!list.find(exist)) {
         clearInterval(timer);
         console.log('restarting serverless')
@@ -31,7 +32,12 @@ const find = (name) => {
 }
 
 const exist = (instance) => {
-  return instance.cmd.indexOf('serverless offline') > 0;
+  let found = instance.cmd.indexOf('serverless offline') > 0;
+  if(found) {
+    pid = instance.pid;
+    console.log(pid)
+  }
+  return found;
 }
 
 const sleep = (ms) => {
@@ -46,15 +52,30 @@ const setCheckInterval = (ms) => {
   }, ms);
 };
 
+const stopServerless = () => {
+  return new Observable((observer) => {
+    let arg = `kill -9 ${pid}`;
+    console.log(arg)
+    exec(arg, {maxBuffer: 1024 * 2000}, (err, stdout, stderr) => {
+      observer.complete();
+    });
+  })
+}
+
 const checkIncoming = () => {
   return new Observable((observer) => {
     let mmsFiles = util.checkMMS();
     if(mmsFiles && mmsFiles.length > 0) {
       clearInterval(timer);
-      util.unzipMMS(mmsFiles)
-      .subscribe(() => {
-        observer.complete();
-      }) 
+      stopServerless()
+      .subscribe({
+        complete: () => {
+          util.unzipMMS(mmsFiles)
+          .subscribe(() => {
+            observer.complete();
+          }) 
+        }
+      })
     } else {
       observer.complete();
     }  
