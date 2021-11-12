@@ -39,6 +39,49 @@ const mp3s = {
 };
 
 export const util = {
+  initialInference: () => {
+    return new Observable((observer) => {
+      try {
+        cameraDisabled = process.platform !== 'darwin' && !existsSync('/dev/video0');
+        if(!existsSync(currentModelPath)) {
+          mkdirSync(currentModelPath);
+        }
+        if(!existsSync(newModelPath)) {
+          mkdirSync(newModelPath);
+        }
+        if(!existsSync(oldModelPath)) {
+          mkdirSync(oldModelPath);
+        }
+        if(!existsSync(oldImage)) {
+          copyFileSync(`${imagePath}/backup.png`, oldImage)
+        }
+        model = null;
+        ieam.renameFile(oldImage, `${imagePath}/image.png`);
+        ieam.checkImage()
+        .subscribe({
+          complete: () => {
+            let video = ieam.getVideoFile(`${backupPath}/video-old`);
+            if(!video) {
+              copyFileSync(`${backupPath}/video-bk.mp4`, `${backupPath}/video-old.mp4`);
+            }  
+            copyFileSync(`${backupPath}/video-old.mp4`, `${videoPath}/video.mp4`);
+    
+            let images = ieam.getFiles(videoPath, /.jpg|.png/);
+            ieam.inferenceVideo(images)
+            .subscribe({
+              complete: () => {
+                console.log('$#$#$ inferencvideo')
+                observer.complete();
+              }
+            })            
+          }
+        })
+      } catch(e) {
+        console.log(e);
+        observer.complete();
+      }
+    });
+  },
   checkMMS: () => {
     try {
       let list;
@@ -147,7 +190,7 @@ export const ieam = {
       if(!existsSync(`${oldImage}`) || !ieam.getVideoFile(`${backupPath}/video-old`)) {
         (async () => {
           await ieam.loadModel(currentModelPath);      
-          ieam.initialInference()
+          util.initialInference()
           .subscribe({
             complete: () => observer.complete()
           })
@@ -162,7 +205,8 @@ export const ieam = {
       try {
         let body = params.body;
         let content = queryString.parse(body, '\r\n', ':');
-        if(content['Content-Type'].indexOf('image') != -1) {
+        // console.log(params)
+        if(content['Content-Type'].match(/image|video/)) {
           console.log(content['Content-Type'])
           let entireData = body.toString();           
           let contentType = content['Content-Type'].substring(1); 
@@ -177,14 +221,30 @@ export const ieam = {
   
           //Cut the extra things at the end of the data (Webkit stuff)
           let binaryData = cleanData.substring(0, cleanData.indexOf('------WebKitFormBoundary'));
-          writeFileSync(`${imagePath}/image.png`, binaryData, 'binary');
-          ieam.checkImage()
-          .subscribe({
-            complete: () => {
-              observer.next('Image captured.')
-              observer.complete()
-            }  
-          })
+          if(content['Content-Type'].indexOf('image') != -1) {
+            writeFileSync(`${imagePath}/image.png`, binaryData, 'binary');
+            ieam.checkImage()
+            .subscribe({
+              complete: () => {
+                observer.next('File uploaded.')
+                observer.complete()
+              }  
+            })
+          } else {
+            writeFileSync(`${videoPath}/video.mp4`, binaryData, 'binary');
+            ieam.extractVideo(`${videoPath}/video.mp4`)
+            .subscribe({
+              complete: () => {
+                ieam.loadModelInferenceVideo()
+                .subscribe({
+                  complete: () => {
+                    observer.next('File uploaded.')
+                    observer.complete()
+                  }
+                })
+              }  
+            })
+          }
         } else {
           console.log('invalid file type');
           observer.next('Invalid file type')
@@ -194,6 +254,26 @@ export const ieam = {
         observer.error(err);
       }
     });
+  },
+  loadModelInferenceVideo: () => {
+    return new Observable((observer) => {
+      (async () => {
+        await ieam.loadModel(currentModelPath);
+
+        let images = ieam.getFiles(videoPath, /.jpg|.png/);
+        console.log(images)
+        ieam.inferenceVideo(images)
+        .subscribe({
+          complete: () => {
+            console.log('helllo')  
+            observer.next(`Hello!`);
+            observer.complete();
+  
+          }
+        })
+      })(); 
+
+    })
   },
   score: (params: Params) => {
     return new Observable((observer) => {
@@ -207,53 +287,24 @@ export const ieam = {
       console.log(confidentCutoff)
 
       if(queryString.assetType === 'Image') {
-        ieam.renameFile(oldImage, `${imagePath}/image.png`); 
-        (async () => {
-          await ieam.loadModel(currentModelPath);
-          let imageFile = `${imagePath}/image.png`;
-          if(!existsSync(imageFile)) {
-            imageFile = `${imagePath}/image.jpg`;
-          }
-          if(existsSync(imageFile)) {
-            try {
-              console.log(imageFile)
-              const image = readFileSync(imageFile);
-              const decodedImage = tfnode.node.decodeImage(new Uint8Array(image), 3);
-              const inputTensor = decodedImage.expandDims(0);
-              ieam.inference(inputTensor)
-              .subscribe((json) => {
-                let images = {};
-                images['/static/images/image-old.png'] = json;
-                json = Object.assign({images: images, version: version, confidentCutoff: confidentCutoff, platform: `${process.platform}:${process.arch}`, cameraDisabled: cameraDisabled, remoteCamerasOn: process.env.npm_config_remoteCamerasOn});
-                jsonfile.writeFile(`${staticPath}/image.json`, json, {spaces: 2});
-                ieam.renameFile(imageFile, `${imagePath}/image-old.png`);
-  
-                observer.next(`Hello!`);
-                observer.complete();
-              });  
-            } catch(e) {
-              console.log(e);
-              observer.next(`Hello!`);
-              observer.complete();
-            }
-          }
-        })(); 
+        ieam.renameFile(oldImage, `${imagePath}/image.png`);
+        ieam.checkImage()
+        .subscribe({
+          complete: () => {
+            console.log('Updated result threshhold')  
+            observer.next(`Updated result threshhold`);
+            observer.complete()
+          }  
+        })
       } else {
-        (async () => {
-          await ieam.loadModel(currentModelPath);
-
-          let images = ieam.getFiles(videoPath, /.jpg|.png/);
-          console.log(images)
-          ieam.inferenceVideo(images)
-          .subscribe({
-            complete: () => {
-              console.log('helllo')  
-              observer.next(`Hello!`);
-              observer.complete();
-    
-            }
-          })
-        })(); 
+        ieam.loadModelInferenceVideo()
+        .subscribe({
+          complete: () => {
+            console.log('Updated result threshhold')  
+            observer.next(`Updated result threshhold`);
+            observer.complete();
+          }
+        })
       } 
     });
   },
@@ -290,48 +341,6 @@ export const ieam = {
         }
       })(); 
     })
-  },
-  initialInference: () => {
-    return new Observable((observer) => {
-      try {
-        cameraDisabled = process.platform !== 'darwin' && !existsSync('/dev/video0');
-        if(!existsSync(currentModelPath)) {
-          mkdirSync(currentModelPath);
-        }
-        if(!existsSync(newModelPath)) {
-          mkdirSync(newModelPath);
-        }
-        if(!existsSync(oldModelPath)) {
-          mkdirSync(oldModelPath);
-        }
-        if(!existsSync(oldImage)) {
-          copyFileSync(`${imagePath}/backup.png`, oldImage)
-        }
-        ieam.renameFile(oldImage, `${imagePath}/image.png`);
-        ieam.checkImage()
-        .subscribe({
-          complete: () => {
-            let video = ieam.getVideoFile(`${backupPath}/video-old`);
-            if(!video) {
-              copyFileSync(`${backupPath}/video-bk.mp4`, `${backupPath}/video-old.mp4`);
-            }  
-            copyFileSync(`${backupPath}/video-old.mp4`, `${videoPath}/video.mp4`);
-    
-            let images = ieam.getFiles(videoPath, /.jpg|.png/);
-            ieam.inferenceVideo(images)
-            .subscribe({
-              complete: () => {
-                console.log('$#$#$ inferencvideo')
-                observer.complete();
-              }
-            })            
-          }
-        })
-      } catch(e) {
-        console.log(e);
-        observer.complete();
-      }
-    });
   },
   extractVideo: (file) => {
     return new Observable((observer) => {
@@ -380,28 +389,34 @@ export const ieam = {
     observer.complete();    
   },
   checkVideo: () => {
-    try {
-      let video = ieam.getVideoFile(`${videoPath}/video`);
-      if(!video) {
-        return;
-      }
-      console.log('here')
-      ieam.extractVideo(video)
-      .subscribe((files: any[]) => {
-        if(files.length > 0) {
-          let images = files.filter((f) => f.indexOf('.jpg') > 0);
-          let video = files.filter((f) => f.indexOf('.jpg') < 0);
-          if(existsSync(video[0])) {
-            console.log(video[0]);
-            copyFileSync(video[0], './public/backup/video-old.mp4');
-            unlinkSync(video[0]);
-          }
-          ieam.inferenceVideo(images);  
+    return new Observable((observer) => {
+      try {
+        let video = ieam.getVideoFile(`${videoPath}/video`);
+        if(!video) {
+          observer.complete();
         }
-      })
-    } catch(e) {
-      console.log(e);
-    }
+        console.log('here')
+        ieam.extractVideo(video)
+        .subscribe((files: any[]) => {
+          if(files.length > 0) {
+            let images = files.filter((f) => f.indexOf('.jpg') > 0);
+            let video = files.filter((f) => f.indexOf('.jpg') < 0);
+            if(existsSync(video[0])) {
+              console.log(video[0]);
+              copyFileSync(video[0], './public/backup/video-old.mp4');
+              unlinkSync(video[0]);
+            }
+            ieam.inferenceVideo(images)
+            .subscribe({
+              complete: () => observer.complete()
+            })  
+          }
+        })
+      } catch(e) {
+        console.log(e);
+        observer.complete()
+      }  
+    });
   },
   deleteFiles: (srcDir, ext) => {
     let files = readdirSync(srcDir);
@@ -482,11 +497,12 @@ export const ieam = {
     try {
       const startTime = tfnode.util.now();
       // console.log('$$$model', model)
-      if(!model) {
-        model = await tfnode.node.loadSavedModel(modelPath);
-      } else {
-        console.log('already loaded')
-      }
+      model = await tfnode.node.loadSavedModel(modelPath);
+      // if(!model) {
+      //   model = await tfnode.node.loadSavedModel(modelPath);
+      // } else {
+      //   console.log('already loaded')
+      // }
       const endTime = tfnode.util.now();
 
       console.log(`loading time:  ${modelPath}, ${endTime-startTime}`);

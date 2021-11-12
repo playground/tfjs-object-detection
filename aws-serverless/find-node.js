@@ -7,6 +7,7 @@ exec = cp.exec;
 let timer;
 let intervalMS = 10000;
 let pid;
+let restarting = false;
 
 const find = (name) => {
   return new Observable((observer) => {
@@ -17,15 +18,30 @@ const find = (name) => {
       if(!list.find(exist)) {
         clearInterval(timer);
         console.log('restarting serverless')
+        restarting = true;
         let child = exec('serverless offline start --allowCache --host "0.0.0.0"', {maxBuffer: 1024 * 2000}, (err, stdout, stderr) => {
         });
         child.stdout.pipe(process.stdout);
         child.on('data', (data) => {
           console.log(data)
         })
+        child.on('close', () => {
+          console.log('Server load completed')
+          restarting = true;
+        })
         observer.complete();
-    } else {
-        observer.complete();
+      } else {
+        if(restarting) {
+          util.initialInference()
+          .subscribe({
+            complete: () => {
+              restarting = false;
+              observer.complete()
+            }
+          })
+        } else {
+          observer.complete();
+        }
       } 
     });  
   })
