@@ -13,7 +13,7 @@ const find = (name) => {
     findProcess('name', name, true)
     .then(function (list) {
       console.log('there are now %s node process(es)', list.length);
-      console.log(list)
+      // console.log(list)
       if(!list.find(exist)) {
         clearInterval(timer);
         console.log('restarting serverless')
