@@ -64,21 +64,27 @@ const stopServerless = () => {
 
 const checkIncoming = () => {
   return new Observable((observer) => {
-    let mmsFiles = util.checkMMS();
-    if(mmsFiles && mmsFiles.length > 0) {
-      clearInterval(timer);
-      stopServerless()
-      .subscribe({
-        complete: () => {
-          util.unzipMMS(mmsFiles)
-          .subscribe(() => {
-            observer.complete();
-          }) 
-        }
-      })
+    if(pid) {
+      let mmsFiles = util.checkMMS();
+      if(mmsFiles && mmsFiles.length > 0) {
+        clearInterval(timer);
+        stopServerless()
+        .subscribe({
+          complete: () => {
+            util.unzipMMS(mmsFiles)
+            .subscribe({
+              complete: () => {
+                observer.complete();
+              }
+            }) 
+          }
+        })
+      } else {
+        observer.complete();
+      }  
     } else {
       observer.complete();
-    }  
+    }
   })
 }
 

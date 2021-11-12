@@ -4,69 +4,69 @@
       "bbox": [
         {
           "detectedBox": [
-            "0.11",
+            "0.13",
             "0.26",
-            "0.44",
-            "0.53"
+            "0.38",
+            "0.60"
           ],
           "detectedClass": "hard-hat",
           "detectedScore": "1.00"
         }
       ],
-      "elapsedTime": 225.21055600047112
+      "elapsedTime": 6301.249424993992
     },
     "/static/video/image_2.jpg": {
       "bbox": [
         {
           "detectedBox": [
-            "0.11",
+            "0.12",
             "0.30",
-            "0.48",
-            "0.56"
+            "0.43",
+            "0.60"
           ],
           "detectedClass": "hard-hat",
           "detectedScore": "1.00"
         }
       ],
-      "elapsedTime": 242.42388099431992
+      "elapsedTime": 191.64378702640533
     },
     "/static/video/image_3.jpg": {
       "bbox": [
         {
           "detectedBox": [
-            "0.09",
+            "0.12",
             "0.25",
-            "0.50",
+            "0.39",
+            "0.58"
+          ],
+          "detectedClass": "hard-hat",
+          "detectedScore": "1.00"
+        }
+      ],
+      "elapsedTime": 198.75092101097107
+    },
+    "/static/video/image_4.jpg": {
+      "bbox": [
+        {
+          "detectedBox": [
+            "0.12",
+            "0.18",
+            "0.42",
             "0.53"
           ],
           "detectedClass": "hard-hat",
           "detectedScore": "1.00"
         }
       ],
-      "elapsedTime": 249.43598797917366
-    },
-    "/static/video/image_4.jpg": {
-      "bbox": [
-        {
-          "detectedBox": [
-            "0.14",
-            "0.21",
-            "0.48",
-            "0.47"
-          ],
-          "detectedClass": "hard-hat",
-          "detectedScore": "1.00"
-        }
-      ],
-      "elapsedTime": 198.2963690161705
+      "elapsedTime": 197.40486401319504
     }
   },
   "version": {
     "name": "Demo model",
     "version": "1.0.0"
   },
-  "videoSrc": "/static/backup/video-old.mp4?1636677789418",
-  "confidentCutoff": 0.85,
+  "videoSrc": "/static/backup/video-old.mp4?1636687910747",
+  "confidentCutoff": 0.95,
   "platform": "darwin:x64",
   "cameraDisabled": true
 }
