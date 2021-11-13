@@ -157,20 +157,28 @@ export class AppComponent implements OnInit, AfterViewInit {
       return;
     }
     this.http.get(file)
-    .subscribe((data) => {
+    .subscribe((data: any) => {
       console.log('json', data)
       if(JSON.stringify(data) !== JSON.stringify(this.prevJson)) {
         console.log(data)
         if(data) {
-          this.prevJson = data;
-          this.cutoff = ''+this.prevJson.confidentCutoff.toFixed(2);
-          this.isServerCameraDisabled = this.prevJson.cameraDisabled === 'true' || this.prevJson.cameraDisabled === true;
-          this.camerasOn = this.prevJson.remoteCamerasOn === 'true' || this.prevJson.remoteCamerasOn === true;
-          if(this.assetType === 'Video') {
-            this.video.nativeElement.src = this.prevJson.videoSrc;
-            this.video.nativeElement.load();
+          if(data.outdated === true) {
+            this.http.get(`${this.host}/init`)
+            .subscribe((data) => {
+              this.resetTimer();
+              this.loadJson(file);
+            });
+          } else {
+            this.prevJson = data;
+            this.cutoff = ''+this.prevJson.confidentCutoff.toFixed(2);
+            this.isServerCameraDisabled = this.prevJson.cameraDisabled === 'true' || this.prevJson.cameraDisabled === true;
+            this.camerasOn = this.prevJson.remoteCamerasOn === 'true' || this.prevJson.remoteCamerasOn === true;
+            if(this.assetType === 'Video') {
+              this.video.nativeElement.src = this.prevJson.videoSrc;
+              this.video.nativeElement.load();
+            }
+            this.drawComponent();
           }
-          this.drawComponent();
         }
       }
     });

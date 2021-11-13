@@ -30,6 +30,8 @@ export const localPath = './local-shared';
 const videoPath = './public/video';
 const backupPath = './public/backup';
 const oldImage = `${imagePath}/image-old.png`;
+const video = `${videoPath}/video.mp4`;
+const oldVideo = `${backupPath}/video-old.mp4`;
 export let sharedPath = '';
 
 const mp3s = {
@@ -71,6 +73,7 @@ export const util = {
             .subscribe({
               complete: () => {
                 console.log('$#$#$ inferencvideo')
+                observer.next('inference complete')
                 observer.complete();
               }
             })            
@@ -78,6 +81,7 @@ export const util = {
         })
       } catch(e) {
         console.log(e);
+        observer.next(e)
         observer.complete();
       }
     });
@@ -101,11 +105,22 @@ export const util = {
       console.log(e)
     }
   },
+  outdated: () => {
+    let json = jsonfile.readFileSync(`${staticPath}/image.json`);
+    json.outdated = true;
+    jsonfile.writeFileSync(`${staticPath}/image.json`, json, {spaces: 2});
+    json = jsonfile.readFileSync(`${staticPath}/video.json`);
+    json.outdated = true;
+    jsonfile.writeFileSync(`${staticPath}/video.json`, json, {spaces: 2});
+  },
   unzipMMS: (files: any) => {
     return new Observable((observer) => {
       let arg = '';
       console.log('list', files, sharedPath, newModelPath);
-      files.forEach((file) => {
+      if(files.length == 0) {
+        observer.complete()
+      }
+      files.forEach((file: string) => {
         if(file === 'model.zip') {
           arg = `unzip -o ${sharedPath}/${file} -d ${newModelPath}`;
         } else if(file === 'image.zip') {
@@ -114,33 +129,27 @@ export const util = {
           observer.next();
           observer.complete();
         }
+        console.log(arg)
         exec(arg, {maxBuffer: 1024 * 2000}, (err, stdout, stderr) => {
           if(existsSync(`${sharedPath}/${file}`)) {
             unlinkSync(`${sharedPath}/${file}`);
           }
           if(!err) {
-            let newVersion = jsonfile.readFileSync(`${newModelPath}/assets/version.json`);
-            if(version && version.version === newVersion.version) {
-              ieam.removeFiles(newModelPath)
-              .subscribe(() => {
-                observer.complete();
-              });   
-            } else {
-              ieam.moveFiles(currentModelPath, oldModelPath)
-              .subscribe({
-                complete: () => ieam.moveFiles(newModelPath, currentModelPath)
-                  .subscribe({
-                    complete: () => {
-                      console.log('new model is available, restarting server...');
-                      observer.complete();
-                    },   
-                    error: (e) => {
-                      console.log(e);
-                      observer.complete(); 
-                    }
-                  }),  
-              })
-            }
+            ieam.moveFiles(currentModelPath, oldModelPath)
+            .subscribe({
+              complete: () => ieam.moveFiles(newModelPath, currentModelPath)
+                .subscribe({
+                  complete: () => {
+                    util.outdated();
+                    console.log('new model is available, restarting server...');
+                    observer.complete();
+                  },   
+                  error: (e) => {
+                    console.log(e);
+                    observer.complete(); 
+                  }
+                }),  
+            })
           } else {
             console.log(err);
             observer.complete();
@@ -231,7 +240,7 @@ export const ieam = {
               }  
             })
           } else {
-            writeFileSync(`${videoPath}/video.mp4`, binaryData, 'binary');
+            writeFileSync(video, binaryData, 'binary');
             ieam.extractVideo(`${videoPath}/video.mp4`)
             .subscribe({
               complete: () => {
@@ -265,6 +274,7 @@ export const ieam = {
         ieam.inferenceVideo(images)
         .subscribe({
           complete: () => {
+            ieam.renameFile(video, oldVideo);
             console.log('helllo')  
             observer.next(`Hello!`);
             observer.complete();

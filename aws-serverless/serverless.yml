@@ -26,6 +26,9 @@ functions:
           path: /score/{pathvar+}
           method: get
       - http:
+          path: /init
+          method: get
+      - http:
           method: post
           path: /upload
           cors: true

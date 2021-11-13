@@ -3,7 +3,7 @@ import { Messenger } from './messenger';
 import { Params } from './params';
 import path = require('path');
 import StaticFileHandler = require('serverless-aws-static-file-handler');
-import { ieam } from './utility';
+import { ieam, util } from './utility';
 
 const clientFilePath = path.join(process.cwd(), './public/');
 const fileHandler = new StaticFileHandler(clientFilePath);
@@ -19,12 +19,7 @@ export const handler = (params: Params, context, callback) => {
   if(!params.action) {
     console.log('$$$###params', params.path, params.action, process.cwd(), clientFilePath)
     params.path = 'index.html';
-    ieam.initialInference()
-    .subscribe({
-      complete: () => {
-        callback(null, fileHandler.get(params, context));
-      }
-    })
+    callback(null, fileHandler.get(params, context));
   } else {
     params.contentType = params.contentType ? params.contentType : 'application/json';
     const response = new Messenger(params);
@@ -49,6 +44,9 @@ let action = {
       observer.next(`Hello!`);
       observer.complete();
     });
+  },  
+  init: (params: Params) => {
+    return util.initialInference();
   },
   upload: (params: Params) => {
     return ieam.upload(params);

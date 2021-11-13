@@ -7,7 +7,8 @@ exec = cp.exec;
 let timer;
 let intervalMS = 10000;
 let pid;
-let restarting = false;
+let restarting = true;
+let mmsFiles = []
 
 const find = (name) => {
   return new Observable((observer) => {
@@ -18,30 +19,34 @@ const find = (name) => {
       if(!list.find(exist)) {
         clearInterval(timer);
         console.log('restarting serverless')
-        restarting = true;
         let child = exec('serverless offline start --allowCache --host "0.0.0.0"', {maxBuffer: 1024 * 2000}, (err, stdout, stderr) => {
         });
         child.stdout.pipe(process.stdout);
-        child.on('data', (data) => {
-          console.log(data)
+        child.stdout.on('data', (data) => {
+          if(data && data.indexOf('server ready:') > 0) {
+            console.log('server ready: ')
+            observer.complete();
+          }
         })
         child.on('close', () => {
-          console.log('Server load completed')
-          restarting = true;
+          console.log('Server shutdown')
         })
-        observer.complete();
       } else {
         if(restarting) {
+          restarting = false;
           util.initialInference()
           .subscribe({
             complete: () => {
-              restarting = false;
+              console.log('initialise...')
               observer.complete()
             }
           })
         } else {
-          observer.complete();
-        }
+          util.unzipMMS(mmsFiles)
+          .subscribe({
+            complete: () => observer.complete()
+          }) 
+        } 
       } 
     });  
   })
@@ -81,18 +86,13 @@ const stopServerless = () => {
 const checkIncoming = () => {
   return new Observable((observer) => {
     if(pid) {
-      let mmsFiles = util.checkMMS();
+      mmsFiles = util.checkMMS();
       if(mmsFiles && mmsFiles.length > 0) {
         clearInterval(timer);
         stopServerless()
         .subscribe({
           complete: () => {
-            util.unzipMMS(mmsFiles)
-            .subscribe({
-              complete: () => {
-                observer.complete();
-              }
-            }) 
+            observer.complete();
           }
         })
       } else {
