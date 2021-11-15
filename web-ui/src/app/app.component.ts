@@ -72,6 +72,7 @@ export class AppComponent implements OnInit, AfterViewInit {
   dialogRef: any;
   host: string;
   lastActive: number;
+  disableCheckbox = true;
 
   constructor(
     private http: HttpClient,
@@ -141,6 +142,11 @@ export class AppComponent implements OnInit, AfterViewInit {
     if(evt.isUserInput) {
       console.log(evt)
       this.assetType = evt.source.value;
+      if(this.assetType === 'Video') {
+        this.camerasOn = false;
+        this.toggleRemoteCamera(false);
+      }
+      this.disableCheckbox = this.assetType === 'Video';
       this.loadJson(`${this.host}/static/js/${this.assetType.toLowerCase()}.json`);
       this.resetTimer();
     }
@@ -151,20 +157,28 @@ export class AppComponent implements OnInit, AfterViewInit {
       return;
     }
     this.http.get(file)
-    .subscribe((data) => {
+    .subscribe((data: any) => {
       console.log('json', data)
       if(JSON.stringify(data) !== JSON.stringify(this.prevJson)) {
         console.log(data)
         if(data) {
-          this.prevJson = data;
-          this.cutoff = ''+this.prevJson.confidentCutoff;
-          this.isServerCameraDisabled = this.prevJson.cameraDisabled === 'true' || this.prevJson.cameraDisabled === true;
-          this.camerasOn = this.prevJson.remoteCamerasOn === 'true' || this.prevJson.remoteCamerasOn === true;
-          if(this.assetType === 'Video') {
-            this.video.nativeElement.src = this.prevJson.videoSrc;
-            this.video.nativeElement.load();
+          if(data.outdated === true) {
+            this.http.get(`${this.host}/init`)
+            .subscribe((data) => {
+              this.resetTimer();
+              this.loadJson(file);
+            });
+          } else {
+            this.prevJson = data;
+            this.cutoff = ''+this.prevJson.confidentCutoff.toFixed(2);
+            this.isServerCameraDisabled = this.prevJson.cameraDisabled === 'true' || this.prevJson.cameraDisabled === true;
+            this.camerasOn = this.prevJson.remoteCamerasOn === 'true' || this.prevJson.remoteCamerasOn === true;
+            if(this.assetType === 'Video') {
+              this.video.nativeElement.src = this.prevJson.videoSrc;
+              this.video.nativeElement.load();
+            }
+            this.drawComponent();
           }
-          this.drawComponent();
         }
       }
     });
@@ -289,6 +303,10 @@ export class AppComponent implements OnInit, AfterViewInit {
   }
   public get triggerObservable(): Observable<void> {
     return this.trigger.asObservable();
+  }
+  doubleClick(evt: Event) {
+    evt.preventDefault();
+    this.frontCamera.nativeElement.innerHTML = 'camera_front';
   }
   toggleClientCamera(evt: Event) {
     evt.preventDefault();

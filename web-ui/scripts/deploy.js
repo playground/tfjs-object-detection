@@ -27,6 +27,13 @@ let build = {
               copyFileSync(`dist/web-ui/polyfills.js`, `../saved-model-service/public/js/polyfills.js`);
               copyFileSync(`dist/web-ui/main.js`, `../saved-model-service/public/js/main.js`);
               copyFileSync(`dist/web-ui/styles.css`, `../saved-model-service/public/js/styles.css`);
+
+              writeFileSync(`../aws-serverless/public/index.html`, html);
+              copyFileSync(`dist/web-ui/favicon.ico`, `../aws-serverless/public/js/favicon.ico`);
+              copyFileSync(`dist/web-ui/runtime.js`, `../aws-serverless/public/js/runtime.js`);
+              copyFileSync(`dist/web-ui/polyfills.js`, `../aws-serverless/public/js/polyfills.js`);
+              copyFileSync(`dist/web-ui/main.js`, `../aws-serverless/public/js/main.js`);
+              copyFileSync(`dist/web-ui/styles.css`, `../aws-serverless/public/js/styles.css`);
               console.log(`done deploying web-ui`);
               observer.next();
               observer.complete();

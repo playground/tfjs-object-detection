@@ -3,6 +3,7 @@
     "sourceMap": true,
     "strict": false,
     "moduleResolution": "node",
+    "outDir": ".build/src",
     "lib": [
       "es5",
       "es6",

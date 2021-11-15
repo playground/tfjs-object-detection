@@ -1,0 +1,16 @@
+FROM node:16.3.0
+
+RUN apt update -y && apt install fswebcam ffmpeg -y
+
+WORKDIR /server
+
+COPY . /server
+RUN npm install -g npm
+RUN npm install
+RUN npm run build
+
+VOLUME /demo_model_mms_helper_shared_volume
+VOLUME /certs
+EXPOSE 80
+EXPOSE 443
+CMD [ "npm", "start" ]
