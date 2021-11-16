@@ -4,59 +4,9 @@
       "bbox": [
         {
           "detectedBox": [
-            "0.09",
-            "0.29",
-            "0.62",
-            "0.55"
-          ],
-          "detectedClass": "hardhat",
-          "detectedScore": "1.00"
-        },
-        {
-          "detectedBox": [
             "0.14",
-            "0.16",
-            "1.00",
-            "0.57"
-          ],
-          "detectedClass": "person",
-          "detectedScore": "0.85"
-        }
-      ],
-      "elapsedTime": 210.39050900936127
-    },
-    "/static/video/image_2.jpg": {
-      "bbox": [
-        {
-          "detectedBox": [
-            "0.12",
-            "0.31",
-            "0.77",
-            "0.60"
-          ],
-          "detectedClass": "hardhat",
-          "detectedScore": "0.99"
-        },
-        {
-          "detectedBox": [
-            "0.48",
-            "0.33",
-            "0.74",
-            "0.55"
-          ],
-          "detectedClass": "mask",
-          "detectedScore": "0.99"
-        }
-      ],
-      "elapsedTime": 209.5270279943943
-    },
-    "/static/video/image_3.jpg": {
-      "bbox": [
-        {
-          "detectedBox": [
-            "0.09",
-            "0.27",
-            "0.72",
+            "0.37",
+            "0.41",
             "0.54"
           ],
           "detectedClass": "hardhat",
@@ -64,69 +14,94 @@
         },
         {
           "detectedBox": [
-            "0.42",
-            "0.29",
-            "0.65",
-            "0.52"
+            "0.09",
+            "0.33",
+            "0.99",
+            "0.57"
           ],
-          "detectedClass": "mask",
+          "detectedClass": "person",
           "detectedScore": "0.99"
         },
         {
           "detectedBox": [
-            "0.11",
-            "0.21",
-            "1.00",
-            "0.56"
+            "0.40",
+            "0.33",
+            "0.96",
+            "0.54"
           ],
-          "detectedClass": "person",
-          "detectedScore": "0.86"
+          "detectedClass": "vest",
+          "detectedScore": "0.93"
         }
       ],
-      "elapsedTime": 194.74889300763607
+      "elapsedTime": 224.4024019241333
     },
-    "/static/video/image_4.jpg": {
+    "/static/video/image_2.jpg": {
       "bbox": [
         {
           "detectedBox": [
-            "0.11",
-            "0.23",
-            "0.69",
-            "0.50"
+            "0.10",
+            "0.52",
+            "0.34",
+            "0.65"
           ],
           "detectedClass": "hardhat",
-          "detectedScore": "1.00"
-        },
-        {
-          "detectedBox": [
-            "0.41",
-            "0.25",
-            "0.66",
-            "0.48"
-          ],
-          "detectedClass": "mask",
           "detectedScore": "0.99"
         },
         {
           "detectedBox": [
-            "0.11",
-            "0.18",
+            "0.08",
+            "0.47",
             "1.00",
-            "0.58"
+            "0.71"
           ],
           "detectedClass": "person",
-          "detectedScore": "0.85"
+          "detectedScore": "0.99"
+        },
+        {
+          "detectedBox": [
+            "0.31",
+            "0.47",
+            "0.98",
+            "0.71"
+          ],
+          "detectedClass": "vest",
+          "detectedScore": "0.97"
         }
       ],
-      "elapsedTime": 198.89496000111103
+      "elapsedTime": 226.61029291152954
+    },
+    "/static/video/image_3.jpg": {
+      "bbox": [
+        {
+          "detectedBox": [
+            "0.40",
+            "0.00",
+            "0.75",
+            "0.16"
+          ],
+          "detectedClass": "hardhat",
+          "detectedScore": "0.99"
+        },
+        {
+          "detectedBox": [
+            "0.67",
+            "0.06",
+            "0.97",
+            "0.25"
+          ],
+          "detectedClass": "vest",
+          "detectedScore": "0.96"
+        }
+      ],
+      "elapsedTime": 242.2070609331131
     }
   },
   "version": {
     "name": "Demo model",
     "version": "2.0.0"
   },
-  "videoSrc": "/static/backup/video-old.mp4?1636508454582",
-  "confidentCutoff": 0.85,
+  "videoSrc": "/static/backup/video-old.mp4?1637095779413",
+  "confidentCutoff": 0.9,
   "platform": "darwin:x64",
   "cameraDisabled": false,
   "remoteCamerasOn": "false"

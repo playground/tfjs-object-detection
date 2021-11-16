@@ -42,7 +42,7 @@ let confidentCutoff = 0.85;
 let assetType = 'Image';
 const $score = new Subject().asObservable().subscribe((data) => {
   if(data.name == 'score') {
-    confidentCutoff = parseFloat(data.score).toFixed(2);
+    confidentCutoff = parseFloat(data.score);
     console.log('subscribe: ', data)
     assetType = data.assetType; 
     if(data.assetType === 'Image') {
