@@ -1,6 +1,6 @@
 {
   "name": "aws-serverless",
-  "version": "1.0.0",
+  "version": "1.0.9",
   "description": "Edge Computing with Serverless",
   "main": "index.js",
   "scripts": {
