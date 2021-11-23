@@ -10,7 +10,5 @@ RUN npm install
 RUN npm run build
 
 VOLUME /demo_model_mms_helper_shared_volume
-VOLUME /certs
-EXPOSE 80
-EXPOSE 443
+EXPOSE 3000
 CMD [ "npm", "start" ]
