@@ -2,7 +2,6 @@ const path = require('path');
 const fs = require('fs');
 const CopyPlugin = require('copy-webpack-plugin');
 const { TsConfigPathsPlugin } = require('awesome-typescript-loader');
-const nodeExternals = require('webpack-node-externals');
 const { ContextReplacementPlugin, IgnorePlugin } = require('webpack');
 const dist = 'dist';  // be aware 'dist' folder is also used for tsconfig output
 
@@ -55,15 +54,86 @@ module.exports = {
     }
   },
   externalsPresets: { node: true }, // in order to ignore built-in modules like path, fs, etc.
-  externals: [nodeExternals(
-    {
-      // load non-javascript files with extensions, presumably via loaders
-      allowlist: [/\.(?!(?:jsx?|json)$).{1,5}$/i]
-    }  
-  )], // in order to ignore all modules in node_modules folder
   mode: 'production',
   target: 'node',
   node: {
-    __dirname: true
+    __dirname: true,
+    global: true
+  },
+  externals: {
+    // pre-defined modules computed below  
   }
 }
+
+// https://console.bluemix.net/docs/openwhisk/openwhisk_reference.html#openwhisk_ref_javascript_environments_8
+const installedModules = [
+  'amqplib',
+  'apn',
+  'async',
+  'bent',
+  'body-parser',
+  'btoa',
+  'cassandra-driver',
+  'cloudant',
+  '@cloudant\/cloudant',
+  'commander',
+  'composeaddresstranslator',
+  'consul',
+  'cookie-parser',
+  'cradle',
+  'elasticsearch',
+  'errorhandler',
+  'etcd3',
+  'express',
+  'express-session',
+  'formidable',
+  'glob',
+  'gm',
+  'ibm-cos-sdk',
+  'ibm_db',
+  'ibmiotf',
+  'iconv-lite',
+  'jsdom',
+  'jsonwebtoken',
+  'lodash',
+  'log4js',
+  'marked',
+  'merge',
+  'moment',
+  '@tensorflow\/tfjs-node',
+  'play-sound',
+  'ffmpeg',
+  'querystring',
+  'mysql',
+  'mustache',
+  'nano',
+  'nodemailer',
+  'oauth2-server',
+  'openwhisk',
+  'path-to-regex',
+  'pg',
+  'process',
+  'pug',
+  'redis',
+  'request',
+  'request-promise',
+  'rimraf',
+  'semver',
+  '@sendgrid/mail@6.3.1',
+  'serve-favicon',
+  'superagent',
+  'twilio',
+  'underscore',
+  'url-pattern',
+  'uuid',
+  'validator',
+  'watson-developer-cloud',
+  'when',
+  'winston',
+  'ws',
+  'xml2js',
+  'xmlhttprequest',
+  'yauzl'
+  ];
+
+  installedModules.forEach((nodeModule) => module.exports.externals[nodeModule] = `commonjs ${nodeModule}`); // don't bundle externals; leave as require('module')

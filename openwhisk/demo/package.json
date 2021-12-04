@@ -7,7 +7,7 @@
     "build": "npm run tsc",
     "web-url": "wsk action get demo/demo-action --url",
     "build:bundle": "nodemon -e ts --watch '../**/*.ts' --exec 'npm run deploy-dev'",
-    "build:js": "nodemon -e ts --watch '../**/*.ts' --exec 'npm run build-js'",
+    "build:js": "nodemon -e ts --watch '../**/*.ts' --exec 'npm run deploy-js --task=deployJS'",
     "build-js": "npm run build && npm run copy-js",
     "copy-js": "cp dist/demo/src/demo-action.js ./index.js && cp dist/common/src/*.js ./js",
     "tsc": "tsc",
@@ -15,17 +15,19 @@
     "deploy": "npm run build && npm run bundle && npm run wskdeploy",
     "deploy-dev": "npm run deploy --package=demo --env=dev",
     "deploy-dev-api": "npm run deploy --package=demo --env=dev --api=true",
-    "deploy-stage": "npm run deploy --package=demo --env=stage",
-    "deploy-stage-api": "npm run deploy --package=demo --env=stage --api=true",
     "deploy-js": "npm run build-js && bin/clean.js && bin/deploy.js",
-    "deploy-stage-js": "npm run deploy-js --task=deployJS --package=demo --env=stage",
-    "deploy-stage-js-api": "npm run deploy --task=deployJS --package=demo --env=stage --api=true",
+    "openwhisk": "bash <(curl -sL https://s.apache.org/openwhisk.sh)",
     "wskdeploy": "bin/deploy.js",
     "switch-account": "bin/switch-account.js"
   },
   "author": "ljeff@us.ibm.com",
   "license": "ISC",
   "dependencies": {
+    "@tensorflow/tfjs-node": "^3.11.0",
+    "ffmpeg": "^0.0.4",
+    "find-process": "^1.4.7",
+    "jsonfile": "^6.1.0",
+    "play-sound": "^1.1.3",
     "rxjs": "^7.4.0"
   },
   "devDependencies": {

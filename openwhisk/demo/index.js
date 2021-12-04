@@ -45,7 +45,7 @@ let action = {
         return (action[path] || action[params.method] || action.default)(params);
     },
     _demo_get: (params) => {
-        return (0, rxjs_1.of)({ data: 'test demo get!' });
+        return (0, rxjs_1.of)({ data: 'test demo get!!!$$' });
     },
     _demo_post: (params) => {
         return (0, rxjs_1.of)({ data: params.body });
@@ -54,10 +54,10 @@ let action = {
         return utility_1.util.initialInference();
     },
     upload: (params) => {
-        return utility_1.ieam.upload(params);
+        // return ieam.upload(params);
     },
     score: (params) => {
-        return utility_1.ieam.score(params);
+        // return ieam.score(params);
     },
     error: (msg) => {
         return new rxjs_1.Observable((observer) => {

@@ -13,6 +13,8 @@ if(fs.existsSync('./index.js')) {
       output.push(line.replace('@common/', `./js/`));
     } else if(line.indexOf('exports.default') >= 0) {
       output.push(line.replace('exports.default', 'exports.main')); 
+    } else if(line.indexOf('exports["default"]') >= 0) {
+      output.push(line.replace('exports["default"]', 'exports.main')); 
     } else {
       output.push(line);
     }

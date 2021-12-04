@@ -1,4 +1,13 @@
 "use strict";
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ieam = exports.util = exports.sharedPath = exports.localPath = exports.mmsPath = exports.currentModelPath = void 0;
 const rxjs_1 = require("rxjs");
@@ -200,13 +209,13 @@ exports.ieam = {
     imageVideoExist: () => {
         return new rxjs_1.Observable((observer) => {
             if (!(0, fs_1.existsSync)(`${oldImage}`) || !exports.ieam.getVideoFile(`${backupPath}/video-old`)) {
-                (async () => {
-                    await exports.ieam.loadModel(exports.currentModelPath);
+                (() => __awaiter(void 0, void 0, void 0, function* () {
+                    yield exports.ieam.loadModel(exports.currentModelPath);
                     exports.util.initialInference()
                         .subscribe({
                         complete: () => observer.complete()
                     });
-                })();
+                }))();
             }
             else {
                 observer.complete();
@@ -270,8 +279,8 @@ exports.ieam = {
     },
     loadModelInferenceVideo: () => {
         return new rxjs_1.Observable((observer) => {
-            (async () => {
-                await exports.ieam.loadModel(exports.currentModelPath);
+            (() => __awaiter(void 0, void 0, void 0, function* () {
+                yield exports.ieam.loadModel(exports.currentModelPath);
                 let images = exports.ieam.getFiles(videoPath, /.jpg|.png/);
                 console.log(images);
                 exports.ieam.inferenceVideo(images)
@@ -283,7 +292,7 @@ exports.ieam = {
                         observer.complete();
                     }
                 });
-            })();
+            }))();
         });
     },
     score: (params) => {
@@ -321,8 +330,8 @@ exports.ieam = {
     },
     checkImage: () => {
         return new rxjs_1.Observable((observer) => {
-            (async () => {
-                await exports.ieam.loadModel(exports.currentModelPath);
+            (() => __awaiter(void 0, void 0, void 0, function* () {
+                yield exports.ieam.loadModel(exports.currentModelPath);
                 let imageFile = `${imagePath}/image.png`;
                 if (!(0, fs_1.existsSync)(imageFile)) {
                     imageFile = `${imagePath}/image.jpg`;
@@ -350,7 +359,7 @@ exports.ieam = {
                         observer.complete();
                     }
                 }
-            })();
+            }))();
         });
     },
     extractVideo: (file) => {
@@ -460,7 +469,7 @@ exports.ieam = {
             try {
                 let $inference = {};
                 let result;
-                files.forEach(async (imageFile) => {
+                files.forEach((imageFile) => __awaiter(void 0, void 0, void 0, function* () {
                     if ((0, fs_1.existsSync)(imageFile)) {
                         console.log(imageFile);
                         const image = (0, fs_1.readFileSync)(imageFile);
@@ -468,7 +477,7 @@ exports.ieam = {
                         const inputTensor = decodedImage.expandDims(0);
                         $inference[imageFile.replace('./public/', '/static/')] = (exports.ieam.inference(inputTensor));
                     }
-                });
+                }));
                 (0, rxjs_1.forkJoin)($inference)
                     .subscribe({
                     next: (value) => {
@@ -510,11 +519,11 @@ exports.ieam = {
             (0, fs_1.renameSync)(from, to);
         }
     },
-    loadModel: async (modelPath) => {
+    loadModel: (modelPath) => __awaiter(void 0, void 0, void 0, function* () {
         try {
             const startTime = tfnode.util.now();
             // console.log('$$$model', model)
-            model = await tfnode.node.loadSavedModel(modelPath);
+            model = yield tfnode.node.loadSavedModel(modelPath);
             // if(!model) {
             //   model = await tfnode.node.loadSavedModel(modelPath);
             // } else {
@@ -529,7 +538,7 @@ exports.ieam = {
         catch (e) {
             console.log('$@$@', e);
         }
-    },
+    }),
     inference: (inputTensor) => {
         return new rxjs_1.Observable((observer) => {
             const startTime = tfnode.util.now();

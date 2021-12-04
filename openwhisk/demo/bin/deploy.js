@@ -1,4 +1,5 @@
 #! /usr/bin/env node
+const { spawn } = require('child_process');
 const cp = require('child_process'),
   exec = cp.exec;
 const fs = require('fs');
@@ -16,13 +17,15 @@ const task = process.env.npm_config_task || 'deploy';
 const package = process.env.npm_config_package || 'demo';
 const yaml = process.env.npm_config_api ? 'manifest-api.yaml' : 'manifest.yaml';
 
+console.log(task)
+
 let build = {
   deploy: () => {
     build.getEnvVar();
     let arg = `BUCKET=${process.env.BUCKET} ACCESSKEYID=${process.env.ACCESSKEYID} `;
     arg += `SECRETACCESSKEY=${process.env.SECRETACCESSKEY}  COS_ENDPOINT=${process.env.COS_ENDPOINT} `;
     arg += ` COS_IBMAUTHENDPOINT=${process.env.COS_IBMAUTHENDPOINT} REGION=${process.env.REGION} `;
-    arg += ` SERVICEINSTANCEID=${process.env.SERVICEINSTANCEID} wskdeploy -m ${yaml}`;
+    arg += ` SERVICEINSTANCEID=${process.env.SERVICEINSTANCEID} wskdeploy -v -m ${yaml}`;
     console.log('deploying...')
     exec(arg, {maxBuffer: 1024 * 2000}, (err, stdout, stderr) => {
       if(!err) {
@@ -40,21 +43,32 @@ let build = {
     exec(`zip -r demo-action.zip *`, {maxBuffer: 1024 * 2000}, (err, stdout, stderr) => {
       if(!err) {
         console.log('done zipping demo action...');
-        build.getEnvVar();
-        let arg = `ibmcloud fn action update ${package}/demo-action --kind nodejs:12 --memory 2048 --timeout 280000 demo-action.zip`;
-        arg += ` --param bucket ${process.env.BUCKET} --param accessKeyId ${process.env.ACCESSKEYID}`;
-        arg += ` --param secretAccessKey ${process.env.SECRETACCESSKEY} --param endpoint ${process.env.COS_ENDPOINT}`;
-        arg += ` --param ibmAuthEndpoint ${process.env.COS_IBMAUTHENDPOINT} --param region ${process.env.REGION}`;
-        arg += ` --param serviceInstanceId ${process.env.SERVICEINSTANCEID}`;
+        // build.getEnvVar();
+        let arg = `wsk action update ${package}/demo-action demo-action.zip --kind nodejs:12`;
+        // arg += ` --param bucket ${process.env.BUCKET} --param accessKeyId ${process.env.ACCESSKEYID}`;
+        // arg += ` --param secretAccessKey ${process.env.SECRETACCESSKEY} --param endpoint ${process.env.COS_ENDPOINT}`;
+        // arg += ` --param ibmAuthEndpoint ${process.env.COS_IBMAUTHENDPOINT} --param region ${process.env.REGION}`;
+        // arg += ` --param serviceInstanceId ${process.env.SERVICEINSTANCEID}`;
         console.log('deploying...')
-        exec(arg, {maxBuffer: 1024 * 2000}, (err, stdout, stderr) => {
-          if(!err) {
-            console.log(stdout)
-            console.log(`done add/update ${package}/demo-action`);
-          } else {
-            console.log('failed to add/update demo-action', err);
-          }
+        let child = spawn(arg, ['-b', '-n', 3]);
+        child.stdout.on("data", (data) => {
+          console.log(`${data}`);
         });
+        child.stderr.on('data', (data) => {
+          console.log(`stderr: ${data}`);
+        });
+        child.on('close', (code) => {
+          console.log(`child process exited with code ${code}`);
+        });
+
+        // exec(arg, {maxBuffer: 1024 * 10000}, (err, stdout, stderr) => {
+        //   if(!err) {
+        //     console.log(stdout)
+        //     console.log(`done add/update ${package}/demo-action`);
+        //   } else {
+        //     console.log('failed to add/update demo-action', err);
+        //   }
+        // });
       } else {
         console.log(err);
       }
