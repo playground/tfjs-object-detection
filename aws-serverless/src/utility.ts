@@ -117,7 +117,7 @@ export const util = {
     return new Observable((observer) => {
       let arg = '';
       console.log('list', files, sharedPath, newModelPath);
-      if(files.length == 0) {
+      if(!files || files.length == 0) {
         observer.complete()
       }
       files.forEach((file: string) => {
