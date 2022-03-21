@@ -37,6 +37,33 @@ let build = {
     });
   },
   deployJS: () => {
+    build.getEnvVar();
+    if(fs.existsSync('demo-action.zip')) {
+      fs.unlinkSync('demo-action.zip');
+    }  
+    exec(`zip -r demo-action.zip *`, {maxBuffer: 1024 * 2000}, (err, stdout, stderr) => {
+      if(!err) {
+        console.log('done zipping demo action...');
+
+        let arg = `BUCKET=${process.env.BUCKET} ACCESSKEYID=${process.env.ACCESSKEYID} `;
+        arg += `SECRETACCESSKEY=${process.env.SECRETACCESSKEY}  COS_ENDPOINT=${process.env.COS_ENDPOINT} `;
+        arg += ` COS_IBMAUTHENDPOINT=${process.env.COS_IBMAUTHENDPOINT} REGION=${process.env.REGION} `;
+        arg += ` SERVICEINSTANCEID=${process.env.SERVICEINSTANCEID} wskdeploy -v -m manifest-js.yaml`;
+        console.log('deploying...')
+        exec(arg, {maxBuffer: 1024 * 2000}, (err, stdout, stderr) => {
+          if(!err) {
+            console.log(stdout)
+            console.log(`done deploying ${package}`);
+          } else {
+            console.log('failed to deploy', err);
+          }
+        });
+      } else {
+        console.log(err);
+      }
+    });
+  },
+  deployJS2: () => {
     if(fs.existsSync('demo-action.zip')) {
       fs.unlinkSync('demo-action.zip');
     }  

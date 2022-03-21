@@ -49,16 +49,16 @@ let action = {
     return (action[path] || action[params.method] || action.default)(params);
   },
   _demo_get: (params: Params) => {
-    return of({data: 'test demo get!!!$$'});
+    return of({data: 'test demo get!!$$$$$'});
   },
   _demo_post: (params: Params) => {
     return of({data: params.body});
   },
   init: (params: Params) => {
-    return util.initialInference();
+    // return util.initialInference();
   },
   upload: (params: Params) => {
-    // return ieam.upload(params);
+    return ieam.upload(params);
   },  
   score: (params: Params) => {
     // return ieam.score(params);

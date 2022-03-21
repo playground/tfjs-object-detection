@@ -45,16 +45,16 @@ let action = {
         return (action[path] || action[params.method] || action.default)(params);
     },
     _demo_get: (params) => {
-        return (0, rxjs_1.of)({ data: 'test demo get!!!$$' });
+        return (0, rxjs_1.of)({ data: 'test demo get!!$$$$$' });
     },
     _demo_post: (params) => {
         return (0, rxjs_1.of)({ data: params.body });
     },
     init: (params) => {
-        return utility_1.util.initialInference();
+        // return util.initialInference();
     },
     upload: (params) => {
-        // return ieam.upload(params);
+        return utility_1.ieam.upload(params);
     },
     score: (params) => {
         // return ieam.score(params);
