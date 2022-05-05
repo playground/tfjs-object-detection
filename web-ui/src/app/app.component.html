@@ -29,7 +29,57 @@
     </a>
 </div>
 
-<div class="content hzn-content" role="main">
+<div *ngIf="selectedSensor == 'Moisture'" class="content hzn-content" role="main">
+  <mat-card #mat_card class="hzn-card">
+    <mat-card-header #mat_card_header>
+      <mat-form-field appearance="outline" class="hzn-form-field-select">
+        <mat-label class="hzn-label">Moisture Sensor</mat-label>
+        <mat-select [(value)]="selectedMoistureSensor" class="hzn-mat-select">
+          <mat-option *ngFor="let sensor of moistureSensors" [value]="sensor.url" (onSelectionChange)="sensorUrl($event)">{{ sensor.name }}</mat-option>
+        </mat-select>
+      </mat-form-field>
+      <mat-form-field appearance="outline" class="hzn-form-field-select">
+        <mat-label class="hzn-label">Sensor</mat-label>
+        <mat-select [(value)]="selectedSensor" class="hzn-mat-select">
+          <mat-option *ngFor="let sensor of sensors" [value]="sensor" (onSelectionChange)="onSensorChange($event)">{{ sensor }}</mat-option>
+        </mat-select>
+      </mat-form-field>
+    </mat-card-header>
+    <mat-card-content #mat_card_content class="hzn-card-content">
+      <mat-card-subtitle style="margin-bottom:5px;margin-top: 39px;">Sensor Readings</mat-card-subtitle>
+
+        <table mat-table [dataSource]="moistureDataSource" class="mat-elevation-z8">
+
+          <!--- Note that these columns can be defined in any order.
+                The actual rendered columns are set as a property on the row definition" -->
+
+          <!-- Label Column -->
+          <ng-container matColumnDef="name">
+            <th mat-header-cell *matHeaderCellDef>Sensor</th>
+            <td mat-cell *matCellDef="let element"> {{element.name}} </td>
+          </ng-container>
+
+          <!-- url Column -->
+          <ng-container matColumnDef="url">
+            <th mat-header-cell *matHeaderCellDef>url</th>
+            <td mat-cell *matCellDef="let element"> {{element.url}} </td>
+          </ng-container>
+
+          <!-- level Column -->
+          <ng-container matColumnDef="level">
+            <th mat-header-cell *matHeaderCellDef>Moisture Level</th>
+            <td mat-cell *matCellDef="let element"> {{element.level}}% </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="sensorColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: sensorColumns;"></tr>
+        </table>
+
+    </mat-card-content>
+  </mat-card>
+</div>
+
+<div *ngIf="selectedSensor == 'Camera'" class="content hzn-content" role="main">
   <mat-card #mat_card class="hzn-card">
     <mat-card-header #mat_card_header>
       <div class="hzn-button-row">
@@ -46,6 +96,12 @@
           <button mat-icon-button color="primary" title="Upload file">
             <input class="submit" type='submit' value='Upload' />
           </button>
+          <mat-form-field appearance="outline" class="hzn-form-field-select">
+            <mat-label class="hzn-label">Sensor</mat-label>
+            <mat-select [(value)]="selectedSensor" class="hzn-mat-select">
+              <mat-option *ngFor="let sensor of sensors" [value]="sensor" (onSelectionChange)="onSensorChange($event)">{{ sensor }}</mat-option>
+            </mat-select>
+          </mat-form-field>
           <span  class="button_spacer">
             <button mat-icon-button color="primary" (dblclick)="doubleClick($event)" (click)="toggleClientCamera($event)" title="Toggle client camera" [disabled]="isCameraDisabled">
               <mat-icon #front_camera>camera_front</mat-icon>

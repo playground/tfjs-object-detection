@@ -3,7 +3,7 @@ import { NgForm } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { MatSnackBar, MatSnackBarHorizontalPosition, MatSnackBarVerticalPosition, MatSnackBarConfig } from '@angular/material/snack-bar';
 import {WebcamImage, WebcamInitError, WebcamUtil} from 'ngx-webcam';
-import { Subject, Observable } from 'rxjs';
+import { Subject, Observable, forkJoin } from 'rxjs';
 import { MatDialog } from '@angular/material/dialog';
 import { DialogComponent } from './dialog/dialog.component';
 
@@ -32,6 +32,7 @@ export class AppComponent implements OnInit, AfterViewInit {
 
   columns: string[] = ['label', 'score', 'min', 'max'];
   dataSource: any[] = [];
+  sensorColumns: string[] = ['name', 'url', 'level'];
   ctx: CanvasRenderingContext2D;
   title = 'web-ui';
   prevJson!: any;
@@ -60,7 +61,17 @@ export class AppComponent implements OnInit, AfterViewInit {
     {name: 'cam2', on: false},
     {name: 'cam3', on: false}
   ];
+  moistureSensors: any[] = [
+    {name: 'sensor1', url: '', level: ''},
+    {name: 'sensor2', url: '', level: ''},
+    {name: 'sensor3', url: '', level: ''}
+  ]
+  moistureDataSource: any[] = [];
+  sensors: string[] = ['Camera', 'Moisture'];
+  selectedSensor = 'Camera';
   selectedCam = '';
+  selectedMoistureSensor = '';
+  previousSelectedMoistureSensor = '';
   mostRecentCamValue = '';
   camerasOn = false;
   previousSelectedCam = '';
@@ -102,8 +113,10 @@ export class AppComponent implements OnInit, AfterViewInit {
   }
   @HostListener('window:resize', ['$event'])
   onResize(event?:any) {
-    this.getMatCardSize();
-    this.drawComponent();
+    if(this.selectedSensor == 'Camera') {
+      this.getMatCardSize();
+      this.drawComponent();
+    }
   }
   getMatCardSize() {
     this.matCardHeight = this.matCard.nativeElement.offsetHeight;
@@ -123,6 +136,16 @@ export class AppComponent implements OnInit, AfterViewInit {
       this.uploaded = '';
     }
   }
+  onSensorChange(evt: any) {
+    if(evt.isUserInput) {
+      console.log(evt)
+      this.selectedSensor = evt.source.value;
+      this.resetTimer()
+      if(this.selectedSensor == 'Camera') {
+        this.onRefresh()
+      }
+    }
+  }
   onScoreChange(evt: any) {
     if(evt.isUserInput) {
       console.log(evt)
@@ -132,7 +155,7 @@ export class AppComponent implements OnInit, AfterViewInit {
       });
     }
   }
-  onRefresh(evt: any) {
+  onRefresh(evt?: any) {
     this.http.get(`${this.host}/score?score=${this.cutoff}&assetType=${this.assetType}`)
     .subscribe((data) => {
       console.log('json', data)
@@ -357,9 +380,15 @@ export class AppComponent implements OnInit, AfterViewInit {
 
   }
   setInterval(ms: number) {
-    this.timer = setInterval(async () => {
-      this.loadJson(`${this.host}/static/js/${this.assetType.toLowerCase()}.json`);
-    }, ms);
+    if(this.selectedSensor == 'Camera') {
+      this.timer = setInterval(async () => {
+        this.loadJson(`${this.host}/static/js/${this.assetType.toLowerCase()}.json`);
+      }, ms);
+    } else {
+      this.timer = setInterval(async () => {
+        this.getMoistures()
+      }, ms);
+    }
   }
   resetTimer() {
     clearInterval(this.timer);
@@ -380,6 +409,72 @@ export class AppComponent implements OnInit, AfterViewInit {
     this.dialogRef.afterClosed().subscribe((result: any) => {
       this.dialog.closeAll();
       cb(result);
+    });
+  }
+  sensorUrl(evt: any) {
+    if(evt.isUserInput) {
+      console.log(evt)
+      this.showSensorDialog(evt);
+    } else {
+      this.previousSelectedMoistureSensor = evt.source.value;
+    }
+  }
+  fetchCors(path: string) {
+    return new Observable((observer) => {
+      let myHeaders = new Headers();
+      myHeaders.append("Content-Type", "application/json");
+
+      let requestOptions = {
+        method: 'GET',
+        headers: myHeaders,
+        redirect: 'follow',
+        mode: 'cors'
+      };
+      // @ts-ignore
+      fetch(path, requestOptions)
+        .then(response => response.json())
+        .then(result => {
+          console.log(result)
+          observer.next(result)
+          observer.complete()
+        })
+        .catch(error => console.log('error', error));
+    })
+  }
+  getMoistures() {
+    let $get: any[] = [];
+    this.moistureDataSource.forEach((sensor) => {
+      $get.push(this.http.get(`${sensor.url}/moisture`))
+    })
+    forkJoin($get)
+    .subscribe({
+      next: (res: any) => {
+        res.forEach((level: string, idx: number) => {
+          this.moistureDataSource[idx].level = level
+        })
+        console.log(res)
+      }
+    })
+  }
+  showSensorDialog(evt: any) {
+    let path = evt.source.value;
+    this.openDialog({title: `Specify absolute sensor url`, type: 'input', placeholder: 'Sensor url', path: path}, (resp: any) => {
+      if (resp) {
+        resp.path = resp.path.replace(/\/$/, "");
+        console.log(resp);
+        this.moistureDataSource = []
+        this.moistureSensors.forEach((sensor) => {
+          if(sensor.name == evt.source._mostRecentViewValue) {
+            sensor.url = resp.path;
+          }
+          if(sensor.url.length > 0) {
+            this.moistureDataSource.push(sensor)
+          }
+        })
+        this.getMoistures();
+      } else {
+        this.selectedMoistureSensor = this.previousSelectedMoistureSensor;
+      }
     });
   }
   jumpTo(evt: any) {
