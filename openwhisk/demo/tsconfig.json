@@ -1,0 +1,30 @@
+{
+    "compilerOptions": {
+        "declaration": false,
+        "module": "commonjs",
+        "target": "ES2015",
+        "lib": [
+            "es5",
+            "es6",
+            "dom",
+            "es2015",
+            "esnext.asynciterable"
+          ],
+        "types" : ["node"],
+        "noImplicitAny": false,
+        "sourceMap": true,
+        "moduleResolution": "node",
+        "resolveJsonModule": true,
+        "outDir": "dist",
+        "baseUrl": ".",
+        "paths": {
+            "@common/*": [
+                "../common/src/*"
+            ]
+        }
+    },
+    "include": [
+        "src/**/*.ts",
+        "../common/src/**/*.ts"
+    ]
+}

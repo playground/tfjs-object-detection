@@ -1,0 +1,22 @@
+packages:
+  ${PACKAGE}:
+    version: 1.0
+    license: Apache-2.0
+    actions:
+      demo-action:
+        function: dist/demo-action.js
+        runtime: nodejs:12
+        web-export: true
+        include:
+          - ["../common/node_modules/@tensorflow/", "../common/node_modules/ffmpeg/", "../common/node_modules/play-sound/", "../common/node_modules/jsonfile/"]
+        limits:
+          timeout: 60000
+          memorySize: 512
+        inputs:
+          accessKeyId: ${ACCESSKEYID}
+          secretAccessKey: ${SECRETACCESSKEY}
+          endpoint: ${COS_ENDPOINT}
+          ibmAuthEndpoint: ${COS_IBMAUTHENDPOINT}
+          serviceInstanceId: ${SERVICEINSTANCEID}
+          region: ${REGION}
+          bucket: ${BUCKET}
