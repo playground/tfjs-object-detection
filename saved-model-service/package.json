@@ -6,6 +6,7 @@
   "scripts": {
     "start": "node find-node.js",
     "build": "bin/build.js",
+    "build-raspberry": "npm rebuild @tensorflow/tfjs-node --build-from-source",
     "build-image": "npm run build --task=dockerImage",
     "push-image": "npm run build --task=pushImage",
     "test": "echo \"Error: no test specified\" && exit 1"
