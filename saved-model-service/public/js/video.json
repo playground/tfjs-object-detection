@@ -1,45 +1,59 @@
 {
   "images": {
     "/static/video/image_1.jpg": {
-      "bbox": [
-        {
-          "detectedBox": [
-            "0.14",
-            "0.37",
-            "0.35",
-            "0.51"
-          ],
-          "detectedClass": "hard-hat",
-          "detectedScore": "1.00"
-        }
-      ],
-      "elapsedTime": 226.65147100389004
+      "bbox": {
+        "0": 0.022541485726833344,
+        "1": 0.00000181668144705327,
+        "2": 0.9773923754692078,
+        "3": 3.8127461188253164e-9,
+        "4": 0.00006428272172342986,
+        "5": 8.88694628997655e-8
+      },
+      "elapsedTime": 625.9060392379761
     },
     "/static/video/image_2.jpg": {
-      "bbox": [
-        {
-          "detectedBox": [
-            "0.11",
-            "0.51",
-            "0.28",
-            "0.66"
-          ],
-          "detectedClass": "hard-hat",
-          "detectedScore": "0.97"
-        }
-      ],
-      "elapsedTime": 227.55367900431156
+      "bbox": {
+        "0": 0.12098216265439987,
+        "1": 0.0006277764332480729,
+        "2": 0.8781697750091553,
+        "3": 3.777868240462112e-9,
+        "4": 0.00021825908333994448,
+        "5": 0.0000019900326151400805
+      },
+      "elapsedTime": 391.63901805877686
     },
     "/static/video/image_3.jpg": {
-      "bbox": [],
-      "elapsedTime": 277.630572989583
+      "bbox": {
+        "0": 2.60866217516309e-9,
+        "1": 0.00000144063403695327,
+        "2": 0.995059609413147,
+        "3": 0.0000612321455264464,
+        "4": 0.004877735860645771,
+        "5": 7.237821995388638e-13
+      },
+      "elapsedTime": 733.1777801513672
     }
   },
   "version": {
-    "name": "Demo model",
-    "version": "1.0.0"
+    "tfjsVersion": "1.3.1",
+    "tmVersion": "2.4.5",
+    "packageVersion": "0.8.4-alpha2",
+    "packageName": "@teachablemachine/image",
+    "timeStamp": "2022-12-11T21:54:02.557Z",
+    "version": "1.0.0",
+    "userMetadata": {},
+    "modelName": "tm-my-image-model",
+    "labels": [
+      "one_finger",
+      "two_fingers",
+      "three_fingers",
+      "four_fingers",
+      "five_fingers",
+      "fist"
+    ],
+    "imageSize": 224
   },
-  "videoSrc": "/static/backup/video-old.mp4?1651771264185",
+  "videoSrc": "/static/backup/video-old.mp4?1670803366092",
   "confidentCutoff": 0.85,
   "platform": "darwin:x64",
   "cameraDisabled": false,

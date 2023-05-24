@@ -1,24 +1,35 @@
 {
   "images": {
     "/static/images/image-old.png": {
-      "bbox": [
-        {
-          "detectedBox": [
-            "0.03",
-            "0.33",
-            "0.21",
-            "0.54"
-          ],
-          "detectedClass": "hard-hat",
-          "detectedScore": "1.00"
-        }
-      ],
-      "elapsedTime": 250.93606400489807
+      "bbox": {
+        "0": 1.555814321818616e-7,
+        "1": 2.5055308583432634e-7,
+        "2": 0.9999860525131226,
+        "3": 6.4003113919852694e-9,
+        "4": 0.000013146891433279961,
+        "5": 4.892929155175807e-7
+      },
+      "elapsedTime": 298.08071994781494
     }
   },
   "version": {
-    "name": "Demo model",
-    "version": "1.0.0"
+    "tfjsVersion": "1.3.1",
+    "tmVersion": "2.4.5",
+    "packageVersion": "0.8.4-alpha2",
+    "packageName": "@teachablemachine/image",
+    "timeStamp": "2022-12-11T21:54:02.557Z",
+    "version": "1.0.0",
+    "userMetadata": {},
+    "modelName": "tm-my-image-model",
+    "labels": [
+      "one_finger",
+      "two_fingers",
+      "three_fingers",
+      "four_fingers",
+      "five_fingers",
+      "fist"
+    ],
+    "imageSize": 224
   },
   "confidentCutoff": 0.85,
   "platform": "darwin:x64",

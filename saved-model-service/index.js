@@ -3,6 +3,7 @@ const {unlinkSync, stat, renameSync, readdir, readdirSync, existsSync, readFileS
 const jsonfile = require('jsonfile');
 const { Observable, Subject, forkJoin } = require('rxjs');
 const ffmpeg = require('ffmpeg');
+const Jimp = require('jimp');
 const https = require('https');
 const http = require('http');
 const cp = require('child_process'),
@@ -30,6 +31,7 @@ const localPath = './local-shared';
 const videoPath = './public/video';
 const backupPath = './public/backup';
 const oldImage = `${imagePath}/image-old.png`;
+let modelJson = false;
 let sharedPath = '';
 let timer;
 const intervalMS = 10000;
@@ -113,19 +115,33 @@ let ieam = {
         try {
           cycles = 0;
           console.log(imageFile)
-          const image = readFileSync(imageFile);
-          const decodedImage = tfnode.node.decodeImage(new Uint8Array(image), 3);
-          const inputTensor = decodedImage.expandDims(0);
-          ieam.inference(inputTensor)
-          .subscribe((json) => {
-            let images = {};
-            images['/static/images/image-old.png'] = json;
-            json = Object.assign({images: images, version: version, confidentCutoff: confidentCutoff, platform: `${process.platform}:${process.arch}`, cameraDisabled: cameraDisabled, remoteCamerasOn: process.env.npm_config_remoteCamerasOn});
-            jsonfile.writeFile(`${staticPath}/image.json`, json, {spaces: 2});
-            ieam.renameFile(imageFile, `${imagePath}/image-old.png`);
-            // ieam.soundEffect(mp3s.theForce);  
-            ieam.doCapture = true;  
-          });
+          if(modelJson) {
+            ieam.inferenceWithModelJson(imageFile)
+            .subscribe((json) => {
+              let images = {};
+              images['/static/images/image-old.png'] = json;
+              json = Object.assign({images: images, version: version, confidentCutoff: confidentCutoff, platform: `${process.platform}:${process.arch}`, cameraDisabled: cameraDisabled, remoteCamerasOn: process.env.npm_config_remoteCamerasOn});
+              jsonfile.writeFile(`${staticPath}/image.json`, json, {spaces: 2});
+              ieam.renameFile(imageFile, `${imagePath}/image-old.png`);
+              // ieam.soundEffect(mp3s.theForce);  
+              ieam.doCapture = true;  
+            });  
+          } else {
+            const image = readFileSync(imageFile);
+            const decodedImage = tfnode.node.decodeImage(new Uint8Array(image), 3);
+            const inputTensor = decodedImage.expandDims(0);
+            console.log('inference here1')
+            ieam.inference(inputTensor)
+            .subscribe((json) => {
+              let images = {};
+              images['/static/images/image-old.png'] = json;
+              json = Object.assign({images: images, version: version, confidentCutoff: confidentCutoff, platform: `${process.platform}:${process.arch}`, cameraDisabled: cameraDisabled, remoteCamerasOn: process.env.npm_config_remoteCamerasOn});
+              jsonfile.writeFile(`${staticPath}/image.json`, json, {spaces: 2});
+              ieam.renameFile(imageFile, `${imagePath}/image-old.png`);
+              // ieam.soundEffect(mp3s.theForce);  
+              ieam.doCapture = true;  
+            });  
+          }
         } catch(e) {
           console.log(e);
           unlinkSync(imageFile);
@@ -151,7 +167,11 @@ let ieam = {
   inference: (inputTensor) => {
     return new Observable((observer) => {
       const startTime = tfnode.util.now();
-      let outputTensor = model.predict({input_tensor: inputTensor});
+      // let outputTensor = model.predict({input_tensor: inputTensor});
+      let outputTensor = model.predict(inputTensor);
+
+      console.log(inputTensor);
+      model.summary();
       const scores = outputTensor['detection_scores'].arraySync();
       const boxes = outputTensor['detection_boxes'].arraySync();
       const classes = outputTensor['detection_classes'].arraySync();
@@ -181,30 +201,95 @@ let ieam = {
       observer.complete();  
     });
   },
+  inferenceWithModelJson: (imageFile) => {
+    return new Observable((observer) => {
+      (async() => {
+        const startTime = tfnode.util.now();
+        const image = await Jimp.read(imageFile);
+        image.cover(224, 224, Jimp.HORIZONTAL_ALIGN_CENTER | Jimp.VERTICAL_ALIGN_MIDDLE);
+
+        const NUM_OF_CHANNELS = 3;
+        let values = new Float32Array(224 * 224 * NUM_OF_CHANNELS);
+      
+        let i = 0;
+        image.scan(0, 0, image.bitmap.width, image.bitmap.height, (x, y, idx) => {
+          const pixel = Jimp.intToRGBA(image.getPixelColor(x, y));
+          pixel.r = pixel.r / 127.0 - 1;
+          pixel.g = pixel.g / 127.0 - 1;
+          pixel.b = pixel.b / 127.0 - 1;
+          pixel.a = pixel.a / 127.0 - 1;
+          values[i * NUM_OF_CHANNELS + 0] = pixel.r;
+          values[i * NUM_OF_CHANNELS + 1] = pixel.g;
+          values[i * NUM_OF_CHANNELS + 2] = pixel.b;
+          i++;
+        });
+      
+        const outShape = [224, 224, NUM_OF_CHANNELS];
+        let img_tensor = tfnode.tensor3d(values, outShape, 'float32');
+        img_tensor = img_tensor.expandDims(0);
+      
+        const predictions = await model.predict(img_tensor).dataSync();
+      
+        for (let i = 0; i < predictions.length; i++) {
+          const label = labels[i];
+          const probability = predictions[i];
+          console.log(`${label}: ${probability}`);
+        }
+        const endTime = tfnode.util.now();
+        const elapsedTime = endTime - startTime;
+        console.log('predictions:', predictions.length, predictions[0]);
+        console.log('time took: ', elapsedTime);
+        console.log('build json...');
+        observer.next({bbox: predictions, elapsedTime: elapsedTime});
+        observer.complete();    
+      })()
+    })
+  },
   inferenceVideo: (files) => {
     try {
       let $inference = {};
-      files.forEach(async (imageFile) => {
-        if(existsSync(imageFile)) {
-          console.log(imageFile)
-          const image = readFileSync(imageFile);
-          const decodedImage = tfnode.node.decodeImage(new Uint8Array(image), 3);
-          const inputTensor = decodedImage.expandDims(0);
-          $inference[imageFile.replace('./public/', '/static/')] = (ieam.inference(inputTensor));
-        }
-      })
-      forkJoin($inference)
-      .subscribe({
-        next: (value) => {
-          console.log(value);
-          let json = Object.assign({}, {images: value, version: version, videoSrc: `${videoSrc}?${Date.now()}`, confidentCutoff: confidentCutoff, platform: `${process.platform}:${process.arch}`, cameraDisabled: cameraDisabled, remoteCamerasOn: process.env.npm_config_remoteCamerasOn});
-          jsonfile.writeFile(`${staticPath}/video.json`, json, {spaces: 2});
-          // ieam.soundEffect(mp3s.theForce);  
-        },
-        complete: () => {
-          console.log('complete');
-        }
-      });
+      if(modelJson) {
+        files.forEach(async (imageFile) => {
+          if(existsSync(imageFile)) {
+            console.log(imageFile)
+            $inference[imageFile.replace('./public/', '/static/')] = (ieam.inferenceWithModelJson(imageFile));
+          }
+        })
+        forkJoin($inference)
+        .subscribe({
+          next: (value) => {
+            console.log(value);
+            let json = Object.assign({}, {images: value, version: version, videoSrc: `${videoSrc}?${Date.now()}`, confidentCutoff: confidentCutoff, platform: `${process.platform}:${process.arch}`, cameraDisabled: cameraDisabled, remoteCamerasOn: process.env.npm_config_remoteCamerasOn});
+            jsonfile.writeFile(`${staticPath}/video.json`, json, {spaces: 2});
+            // ieam.soundEffect(mp3s.theForce);  
+          },
+          complete: () => {
+            console.log('complete');
+          }
+        });  
+      } else {
+        files.forEach(async (imageFile) => {
+          if(existsSync(imageFile)) {
+            console.log(imageFile)
+            const image = readFileSync(imageFile);
+            const decodedImage = tfnode.node.decodeImage(new Uint8Array(image), 3);
+            const inputTensor = decodedImage.expandDims(0);
+            $inference[imageFile.replace('./public/', '/static/')] = (ieam.inference(inputTensor));
+          }
+        })
+        forkJoin($inference)
+        .subscribe({
+          next: (value) => {
+            console.log(value);
+            let json = Object.assign({}, {images: value, version: version, videoSrc: `${videoSrc}?${Date.now()}`, confidentCutoff: confidentCutoff, platform: `${process.platform}:${process.arch}`, cameraDisabled: cameraDisabled, remoteCamerasOn: process.env.npm_config_remoteCamerasOn});
+            jsonfile.writeFile(`${staticPath}/video.json`, json, {spaces: 2});
+            // ieam.soundEffect(mp3s.theForce);  
+          },
+          complete: () => {
+            console.log('complete');
+          }
+        });  
+      }
     } catch(e) {
       console.log(e);
     }
@@ -461,13 +546,27 @@ let ieam = {
       } else if(modelPath !== newModelPath){
         count++;
         const startTime = tfnode.util.now();
-        model = await tfnode.node.loadSavedModel(modelPath);
-        const endTime = tfnode.util.now();
-
-        console.log(`loading time:  ${modelPath}, ${endTime-startTime}`);
-        labels = jsonfile.readFileSync(`${modelPath}/assets/labels.json`);
-        version = jsonfile.readFileSync(`${modelPath}/assets/version.json`);
-        console.log('version: ', version)
+        console.log(modelPath, __dirname, process.cwd())
+        console.log(existsSync(`${modelPath}/model.json`), `${modelPath}/model.json`)
+        if(existsSync(`${modelPath}/model.json`)) {
+          console.log('yes')
+          modelJson = true;
+          model = await tfnode.loadLayersModel(`file://${modelPath}/model.json`)
+          model.summary();
+          const endTime = tfnode.util.now();
+          console.log(`loading time:  ${modelPath}, ${endTime-startTime}`);
+          labels = jsonfile.readFileSync(`${modelPath}/metadata.json`);
+          version = labels;
+          console.log('version: ', version)
+        } else {
+          modelJson = false;
+          model = await tfnode.node.loadSavedModel(modelPath);
+          const endTime = tfnode.util.now();
+          console.log(`loading time:  ${modelPath}, ${endTime-startTime}`);
+          labels = jsonfile.readFileSync(`${modelPath}/assets/labels.json`);
+          version = jsonfile.readFileSync(`${modelPath}/assets/version.json`);
+          console.log('version: ', version)
+        }
 
         let images = ieam.getFiles(videoPath, /.jpg|.png/);
         console.log(images)
@@ -558,7 +657,7 @@ let ieam = {
         console.log('Started on 80');
       });
     } else {
-      state.server = app.listen(3000, () => {
+      state.server = app.listen(3002, () => {
         console.log('Started on 3000');
       });
     }
