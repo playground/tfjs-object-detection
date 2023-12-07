@@ -658,7 +658,7 @@ let ieam = {
       });
     } else {
       state.server = app.listen(3002, () => {
-        console.log('Started on 3000');
+        console.log('Started on 3002');
       });
     }
     state.server.on('connection', (socket) => {
