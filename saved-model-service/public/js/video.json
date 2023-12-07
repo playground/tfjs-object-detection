@@ -9,7 +9,7 @@
         "4": 0.0000650593065074645,
         "5": 9.312745419265411e-8
       },
-      "elapsedTime": 107.41708278656006
+      "elapsedTime": 166.40100002288818
     },
     "/static/video/image_2.jpg": {
       "bbox": {
@@ -20,7 +20,7 @@
         "4": 0.00024490198120474815,
         "5": 0.000002052915306194336
       },
-      "elapsedTime": 206.37774991989136
+      "elapsedTime": 204.99287509918213
     },
     "/static/video/image_3.jpg": {
       "bbox": {
@@ -31,7 +31,7 @@
         "4": 0.004722021985799074,
         "5": 7.083061350984798e-13
       },
-      "elapsedTime": 243.87379217147827
+      "elapsedTime": 279.6672501564026
     }
   },
   "version": {
@@ -53,7 +53,7 @@
     ],
     "imageSize": 224
   },
-  "videoSrc": "/static/backup/video-old.mp4?1701965930138",
+  "videoSrc": "/static/backup/video-old.mp4?1701981133274",
   "confidentCutoff": 0.85,
   "platform": "darwin:arm64",
   "cameraDisabled": false,
