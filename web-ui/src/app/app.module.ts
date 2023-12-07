@@ -22,33 +22,32 @@ import { FlexLayoutModule } from '@angular/flex-layout';
 import { DialogComponent } from './dialog/dialog.component';
 
 @NgModule({
-  declarations: [
-    AppComponent,
-    DialogComponent
-  ],
-  imports: [
-    BrowserModule,
-    BrowserAnimationsModule,
-    MatIconModule,
-    FormsModule,
-    ReactiveFormsModule,
-    MatFormFieldModule,
-    MatCardModule,
-    MatTableModule,
-    MatSnackBarModule,
-    MatSelectModule,
-    MatInputModule,
-    MatSidenavModule,
-    MatToolbarModule,
-    MatListModule,
-    MatDialogModule,
-    MatCheckboxModule,
-    HttpClientModule,
-    FlexLayoutModule,
-    WebcamModule
-  ],
-  entryComponents: [DialogComponent],
-  providers: [],
-  bootstrap: [AppComponent]
+    declarations: [
+        AppComponent,
+        DialogComponent
+    ],
+    imports: [
+        BrowserModule,
+        BrowserAnimationsModule,
+        MatIconModule,
+        FormsModule,
+        ReactiveFormsModule,
+        MatFormFieldModule,
+        MatCardModule,
+        MatTableModule,
+        MatSnackBarModule,
+        MatSelectModule,
+        MatInputModule,
+        MatSidenavModule,
+        MatToolbarModule,
+        MatListModule,
+        MatDialogModule,
+        MatCheckboxModule,
+        HttpClientModule,
+        FlexLayoutModule,
+        WebcamModule
+    ],
+    providers: [],
+    bootstrap: [AppComponent]
 })
 export class AppModule { }
